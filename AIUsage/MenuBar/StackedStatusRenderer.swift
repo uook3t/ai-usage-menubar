@@ -2,6 +2,10 @@ import AppKit
 
 @MainActor
 enum StackedStatusRenderer {
+    private static let textColor = NSColor(name: nil) { appearance in
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? .white : .black
+    }
+
     static func image(groups: [MenuBarProviderReadings], vpnName: String, vpnFailed: Bool) -> NSImage {
         let entries = groups.map { group in
             let title = group.provider == .vpn ? vpnName : group.provider == .claude ? "Claude" : group.provider.displayName
@@ -14,7 +18,7 @@ enum StackedStatusRenderer {
             }
             let stale = group.readings.contains(where: \.isStale) || (group.provider == .vpn && vpnFailed)
             let value = (readings.isEmpty ? "--" : readings.joined(separator: " · ")) + (stale ? " !" : "")
-            var color = NSColor.labelColor
+            var color = textColor
             if group.provider == .vpn, let reading = group.readings.first,
                case .percentage(let value) = reading.value {
                 let used = reading.displayMode == .used ? value : 100 - value
@@ -26,7 +30,7 @@ enum StackedStatusRenderer {
     }
 
     static func preview(name: String, value: String) -> NSImage {
-        image(entries: [Entry(title: name, value: value, color: .labelColor)])
+        image(entries: [Entry(title: name, value: value, color: textColor)])
     }
 
     private struct Entry {
@@ -51,12 +55,12 @@ enum StackedStatusRenderer {
             let paragraph = NSMutableParagraphStyle()
             paragraph.alignment = .left
             for (entry, width) in zip(entries, widths) {
-                (entry.title as NSString).draw(in: NSRect(x: x, y: 14, width: width, height: 7), withAttributes: [
-                    .font: titleFont, .foregroundColor: NSColor.labelColor, .paragraphStyle: paragraph
-                ])
-                (entry.value as NSString).draw(in: NSRect(x: x, y: 3, width: width, height: 13), withAttributes: [
+                NSAttributedString(string: entry.title, attributes: [
+                    .font: titleFont, .foregroundColor: textColor, .paragraphStyle: paragraph
+                ]).draw(with: NSRect(x: x, y: 14, width: width, height: 7))
+                NSAttributedString(string: entry.value, attributes: [
                     .font: numberFont, .foregroundColor: entry.color, .paragraphStyle: paragraph
-                ])
+                ]).draw(with: NSRect(x: x, y: 3, width: width, height: 13))
                 x += width + spacing
             }
             return true
@@ -75,7 +79,15 @@ final class StackedStatusView: NSView {
 
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
-        image?.draw(at: .zero, from: .zero, operation: .sourceOver, fraction: 1)
+        effectiveAppearance.performAsCurrentDrawingAppearance {
+            image?.draw(at: .zero, from: .zero, operation: .sourceOver, fraction: 1)
+        }
+    }
+
+    override func viewDidChangeEffectiveAppearance() {
+        super.viewDidChangeEffectiveAppearance()
+        image?.recache()
+        needsDisplay = true
     }
 
     // Keep the whole status item clickable by its owning NSStatusBarButton.

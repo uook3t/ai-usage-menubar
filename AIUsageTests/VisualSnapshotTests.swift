@@ -7,6 +7,50 @@ import XCTest
 final class VisualSnapshotTests: XCTestCase {
     private let panelWidth: CGFloat = 392
 
+    func testStackedMenuBarMatchesOpaqueTextAndBaselines() {
+        for appearanceName in [NSAppearance.Name.aqua, .darkAqua] {
+            let appearance = NSAppearance(named: appearanceName)!
+            for scale in [1, 2] {
+                func render(_ draw: () -> Void) -> [UInt8] {
+                    let width = 50 * scale
+                    let height = 22 * scale
+                    let bitmap = NSBitmapImageRep(
+                        bitmapDataPlanes: nil, pixelsWide: width, pixelsHigh: height,
+                        bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
+                        isPlanar: false, colorSpaceName: .deviceRGB,
+                        bytesPerRow: width * 4, bitsPerPixel: 32
+                    )!
+                    bitmap.size = NSSize(width: 50, height: 22)
+                    NSGraphicsContext.saveGraphicsState()
+                    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmap)
+                    appearance.performAsCurrentDrawingAppearance(draw)
+                    NSGraphicsContext.restoreGraphicsState()
+                    return stride(from: 3, to: width * height * 4, by: 4).map {
+                        bitmap.bitmapData![$0]
+                    }
+                }
+                let actual = render {
+                    StackedStatusRenderer.preview(name: "VPN", value: "98.4%")
+                        .draw(at: .zero, from: .zero, operation: .sourceOver, fraction: 1)
+                }
+                let reference = render {
+                    let paragraph = NSMutableParagraphStyle()
+                    paragraph.alignment = .left
+                    let color: NSColor = appearanceName == .darkAqua ? .white : .black
+                    for (text, font, rect) in [
+                        ("VPN", NSFont.systemFont(ofSize: 7, weight: .light), NSRect(x: 2, y: 14, width: 46, height: 7)),
+                        ("98.4%", NSFont.systemFont(ofSize: 12, weight: .regular), NSRect(x: 2, y: 3, width: 46, height: 13))
+                    ] {
+                        NSAttributedString(string: text, attributes: [
+                            .font: font, .foregroundColor: color, .paragraphStyle: paragraph
+                        ]).draw(with: rect)
+                    }
+                }
+                XCTAssertTrue(actual == reference, "Glyph opacity and position must match at \(scale)x in \(appearanceName.rawValue)")
+            }
+        }
+    }
+
     func testProviderIconsAreTemplateImagesAtMenuBarSize() {
         for provider in ProviderID.allCases {
             let image = ProviderIcon.templateImage(for: provider, size: 15)
