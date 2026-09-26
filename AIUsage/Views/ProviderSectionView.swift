@@ -260,39 +260,12 @@ private struct QuotaTile: View {
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { context in
             VStack(alignment: .leading, spacing: 5) {
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
-                    Text(window.kind.title)
-                        .font(.caption.weight(.medium))
-                        .lineLimit(1)
-                    Spacer(minLength: 4)
-                    HStack(alignment: .firstTextBaseline, spacing: 3) {
-                        Text(percentText)
-                            .font(.title3.monospacedDigit().weight(.semibold))
-                            .foregroundStyle(valueTint)
-                        Text(displayMode.valueSuffix)
-                            .font(.caption2.weight(.medium))
-                            .foregroundStyle(.secondary)
-                    }
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                }
-
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        Capsule()
-                            .fill(.primary.opacity(0.1))
-                        Capsule()
-                            .fill(progressTint)
-                            .frame(
-                                width: geometry.size.width *
-                                    displayMode.renderedFraction(
-                                        from: window.usedPercent
-                                    )
-                            )
-                    }
-                }
-                .frame(height: 4)
-                .accessibilityHidden(true)
+                UsageMeterView(
+                    title: window.kind.title,
+                    usedPercent: window.usedPercent,
+                    displayMode: displayMode,
+                    percentText: percentText
+                )
 
                 if let reset = window.resetsAt {
                     HStack(spacing: 5) {
@@ -321,22 +294,6 @@ private struct QuotaTile: View {
             return "\(Int(value))%"
         }
         return "\(value.formatted(.number.precision(.fractionLength(1))))%"
-    }
-
-    private var valueTint: Color {
-        switch window.usedPercent {
-        case 85...: UsagePalette.critical
-        case 60..<85: UsagePalette.warning
-        default: Color(nsColor: .labelColor)
-        }
-    }
-
-    private var progressTint: Color {
-        switch window.usedPercent {
-        case 85...: UsagePalette.critical
-        case 60..<85: UsagePalette.warning
-        default: UsagePalette.normalUsage
-        }
     }
 
     private func resetText(_ date: Date, relativeTo now: Date) -> String {
