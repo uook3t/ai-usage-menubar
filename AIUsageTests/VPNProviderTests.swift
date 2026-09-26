@@ -88,10 +88,9 @@ final class VPNProviderTests: XCTestCase {
         let snapshot = try VPNProvider.decode(valid, fetchedAt: .now)
         let store = UsageStore(providers: [SequencedProvider(id: .vpn, results: [.success(snapshot)])])
         await store.refresh()
-        store.configureVPN(name: "流量", intervalMinutes: 17, endpoint: "https://example.com/new")
+        store.configureVPN(name: "流量", endpoint: "https://example.com/new")
         XCTAssertNil(store.states[.vpn]?.snapshot)
         XCTAssertEqual(store.vpnName, "流量")
-        XCTAssertEqual(store.vpnIntervalMinutes, 17)
     }
     @MainActor
     func testLateResponseCannotRestorePreviousEndpointData() async throws {
@@ -100,7 +99,7 @@ final class VPNProviderTests: XCTestCase {
         let store = UsageStore(providers: [provider], availabilityChecker: FixedProviderAvailabilityChecker())
         let request = Task { await store.refresh() }
         await provider.waitUntilStarted()
-        store.configureVPN(name: "VPN", intervalMinutes: 5, endpoint: "https://example.com/new")
+        store.configureVPN(name: "VPN", endpoint: "https://example.com/new")
         await provider.finish()
         await request.value
         XCTAssertNil(store.states[.vpn]?.snapshot)
@@ -115,11 +114,81 @@ final class VPNProviderTests: XCTestCase {
         let settings = AppPreferences(defaults: defaults)
         settings.vpnURL = "https://example.com/?test=value"
         settings.vpnName = "流量"
-        settings.vpnIntervalMinutes = 17
+        settings.vpnDisplayMode = .used
+        settings.usageDisplayMode = .remaining
+        settings.refreshInterval = .fifteenMinutes
         let restored = AppPreferences(defaults: defaults)
         XCTAssertEqual(restored.vpnURL, settings.vpnURL)
         XCTAssertEqual(restored.vpnDisplayName, "流量")
-        XCTAssertEqual(restored.vpnIntervalMinutes, 17)
+        XCTAssertEqual(restored.vpnDisplayMode, .used)
+        XCTAssertEqual(restored.usageDisplayMode, .remaining)
+        XCTAssertEqual(restored.refreshInterval, .fifteenMinutes)
+    }
+
+    @MainActor
+    func testExistingSharedModeMigratesOnceWithoutChangingRefreshInterval() throws {
+        let suite = "VPNMigrationTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.set("used", forKey: "usageDisplayMode")
+        defaults.set("thirtyMinutes", forKey: "refreshInterval")
+        defaults.set(17, forKey: "vpn.interval")
+        let first = AppPreferences(defaults: defaults)
+        XCTAssertEqual(first.vpnDisplayMode, .used)
+        XCTAssertEqual(first.refreshInterval, .thirtyMinutes)
+        XCTAssertNil(defaults.object(forKey: "vpn.interval"))
+        first.usageDisplayMode = .remaining
+        let restored = AppPreferences(defaults: defaults)
+        XCTAssertEqual(restored.usageDisplayMode, .remaining)
+        XCTAssertEqual(restored.vpnDisplayMode, .used)
+    }
+
+    @MainActor
+    func testMixedAIAndVPNDisplayModesAreIndependent() async throws {
+        let vpnSnapshot = try VPNProvider.decode(valid, fetchedAt: .now)
+        let codexSnapshot = ProviderSnapshot(provider: .codex, planName: nil,
+            windows: [QuotaWindow(kind: .weekly, usedPercent: 40, resetsAt: nil)], fetchedAt: .now)
+        let store = UsageStore(providers: [
+            SequencedProvider(id: .vpn, results: [.success(vpnSnapshot)]),
+            SequencedProvider(id: .codex, results: [.success(codexSnapshot)])
+        ], availabilityChecker: FixedProviderAvailabilityChecker())
+        await store.refresh()
+        let configurations = [MenuBarProviderConfiguration(provider: .codex, metrics: [.weekly]),
+                              MenuBarProviderConfiguration(provider: .vpn, metrics: [.totalUsage])]
+        let groups = store.menuBarProviderReadings(for: configurations, displayMode: .remaining, vpnDisplayMode: .used)
+        XCTAssertEqual(groups[0].readings.first?.value, .percentage(60))
+        XCTAssertEqual(groups[0].readings.first?.displayMode, .remaining)
+        XCTAssertEqual(groups[1].readings.first?.displayMode, .used)
+        XCTAssertEqual(MenuBarPresentation(reading: try XCTUnwrap(groups[1].readings.first)).valueText, "1.6%")
+        let reversed = store.menuBarProviderReadings(for: configurations, displayMode: .used, vpnDisplayMode: .remaining)
+        XCTAssertEqual(reversed[0].readings.first?.value, .percentage(40))
+        XCTAssertEqual(MenuBarPresentation(reading: try XCTUnwrap(reversed[1].readings.first)).valueText, "98.4%")
+    }
+
+    @MainActor
+    func testOneScheduledTickRefreshesBothAIAndVPN() async throws {
+        let gate = RefreshTickGate()
+        let vpn = CountingProvider(id: .vpn, result: .success(try VPNProvider.decode(valid, fetchedAt: .now)))
+        let codex = CountingProvider(id: .codex, result: .success(ProviderSnapshot(provider: .codex, planName: nil,
+            windows: [QuotaWindow(kind: .weekly, usedPercent: 40, resetsAt: nil)], fetchedAt: .now)))
+        let store = UsageStore(providers: [codex, vpn], availabilityChecker: FixedProviderAvailabilityChecker(),
+            refreshInterval: .fifteenMinutes, trackedProviderIDs: [.codex, .vpn], sleep: { await gate.sleep($0) })
+        store.start()
+        await gate.waitUntilSleeping()
+        let firstVPN = await vpn.fetchCallCount()
+        let firstAI = await codex.fetchCallCount()
+        XCTAssertEqual(firstVPN, 1)
+        XCTAssertEqual(firstAI, 1)
+        await gate.advance()
+        await gate.waitUntilSleeping()
+        let secondVPN = await vpn.fetchCallCount()
+        let secondAI = await codex.fetchCallCount()
+        let durations = await gate.durations
+        XCTAssertEqual(secondVPN, 2)
+        XCTAssertEqual(secondAI, 2)
+        XCTAssertEqual(durations, [.seconds(900), .seconds(900)])
+        store.stop()
+        await gate.advance()
     }
 
 }
@@ -144,5 +213,27 @@ private actor SuspendedVPNProvider: UsageProvider {
     func finish() {
         continuation?.resume(returning: snapshot)
         continuation = nil
+    }
+}
+
+private actor RefreshTickGate {
+    private var sleeper: CheckedContinuation<Void, Never>?
+    private var observer: CheckedContinuation<Void, Never>?
+    private(set) var durations: [Duration] = []
+    func sleep(_ duration: Duration) async {
+        durations.append(duration)
+        await withCheckedContinuation { continuation in
+            sleeper = continuation
+            observer?.resume()
+            observer = nil
+        }
+    }
+    func waitUntilSleeping() async {
+        if sleeper != nil { return }
+        await withCheckedContinuation { observer = $0 }
+    }
+    func advance() {
+        sleeper?.resume()
+        sleeper = nil
     }
 }

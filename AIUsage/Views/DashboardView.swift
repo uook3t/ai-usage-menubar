@@ -4,8 +4,9 @@ import SwiftUI
 struct DashboardView: View {
     @Bindable var store: UsageStore
     @Bindable var launchAtLogin: LaunchAtLoginController
-    @Binding var usageDisplayMode: UsageDisplayMode
-    @Binding var refreshInterval: RefreshIntervalOption
+    let usageDisplayMode: UsageDisplayMode
+    var vpnDisplayMode: UsageDisplayMode = .remaining
+    let refreshInterval: RefreshIntervalOption
     let availableUpdateVersion: String?
     let isCheckingForUpdates: Bool
     var checkForUpdates: @MainActor () -> Void = {}
@@ -15,7 +16,8 @@ struct DashboardView: View {
         GlassEffectContainer(spacing: 10) {
             DashboardContentView(
                 store: store,
-                usageDisplayMode: $usageDisplayMode
+                usageDisplayMode: usageDisplayMode,
+                vpnDisplayMode: vpnDisplayMode
             )
                 .safeAreaBar(edge: .bottom, spacing: 0) {
                     footer
@@ -144,7 +146,8 @@ struct RefreshButtonLabel: View {
 
 struct DashboardContentView: View {
     @Bindable var store: UsageStore
-    @Binding var usageDisplayMode: UsageDisplayMode
+    let usageDisplayMode: UsageDisplayMode
+    var vpnDisplayMode: UsageDisplayMode = .remaining
 
     var body: some View {
         VStack(spacing: 8) {
@@ -174,7 +177,7 @@ struct DashboardContentView: View {
                 if let state = store.states[provider] {
                     ProviderSectionView(
                         state: state,
-                        displayMode: usageDisplayMode,
+                        displayMode: provider == .vpn ? vpnDisplayMode : usageDisplayMode,
                         displayName: state.provider == .vpn ? store.vpnName : nil
                     )
                 }
@@ -191,18 +194,6 @@ struct DashboardContentView: View {
             Text("AI Usage")
                 .font(.headline.weight(.semibold))
             Spacer()
-            Picker("Numbers", selection: $usageDisplayMode) {
-                ForEach(UsageDisplayMode.allCases) { mode in
-                    Text(mode.title)
-                        .tag(mode)
-                }
-            }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .controlSize(.small)
-            .frame(width: 112)
-            .accessibilityLabel("Usage numbers")
-            .accessibilityHint("Choose whether percentages show usage left or used")
         }
         .padding(.horizontal, 4)
         .frame(height: 28)

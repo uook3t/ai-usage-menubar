@@ -102,8 +102,8 @@ final class VisualSnapshotTests: XCTestCase {
             let view = DashboardView(
                 store: store,
                 launchAtLogin: LaunchAtLoginController(service: SnapshotLoginService()),
-                usageDisplayMode: .constant(.used),
-                refreshInterval: .constant(.fiveMinutes),
+                usageDisplayMode: .used,
+                refreshInterval: .fiveMinutes,
                 availableUpdateVersion: nil,
                 isCheckingForUpdates: false
             )
@@ -122,8 +122,8 @@ final class VisualSnapshotTests: XCTestCase {
         let view = DashboardView(
             store: store,
             launchAtLogin: LaunchAtLoginController(service: SnapshotLoginService()),
-            usageDisplayMode: .constant(.remaining),
-            refreshInterval: .constant(.fifteenMinutes),
+            usageDisplayMode: .remaining,
+            refreshInterval: .fifteenMinutes,
             availableUpdateVersion: "0.2.0",
             isCheckingForUpdates: false
         )

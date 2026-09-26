@@ -157,13 +157,26 @@ struct SettingsView: View {
                 verticalSpacing: 11
             ) {
                 GridRow {
-                    Text("Numbers")
+                    Text("AI 用量显示")
                         .foregroundStyle(.secondary)
 
-                    Picker("Numbers", selection: $preferences.usageDisplayMode) {
+                    Picker("AI 用量显示", selection: $preferences.usageDisplayMode) {
                         ForEach(UsageDisplayMode.allCases) { mode in
                             Text(mode.title)
                                 .tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .frame(width: 130)
+                }
+
+                GridRow {
+                    Text("VPN 用量显示")
+                        .foregroundStyle(.secondary)
+                    Picker("VPN 用量显示", selection: $preferences.vpnDisplayMode) {
+                        ForEach(UsageDisplayMode.allCases) { mode in
+                            Text(mode.title).tag(mode)
                         }
                     }
                     .pickerStyle(.segmented)
@@ -179,10 +192,10 @@ struct SettingsView: View {
                 }
 
                 GridRow {
-                    Text("AI 刷新间隔")
+                    Text("刷新间隔")
                         .foregroundStyle(.secondary)
 
-                    Picker("Refresh", selection: $preferences.refreshInterval) {
+                    Picker("刷新间隔", selection: $preferences.refreshInterval) {
                         ForEach(RefreshIntervalOption.allCases) { option in
                             Text(option.title)
                                 .tag(option)

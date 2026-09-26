@@ -5,7 +5,6 @@ struct VPNSettingsSection: View {
     @Bindable var preferences: AppPreferences
     @State private var endpoint = ""
     @State private var name = "VPN"
-    @State private var interval = 5
     @State private var reveal = false
     @State private var message: String?
     @State private var failed = false
@@ -39,7 +38,6 @@ struct VPNSettingsSection: View {
                 }.help(reveal ? "隐藏查询地址" : "显示查询地址")
             }
             HStack {
-                Stepper("每 \(interval) 分钟刷新", value: $interval, in: 1...60)
                 Spacer()
                 Button("保存并刷新", action: save).buttonStyle(.borderedProminent)
             }
@@ -51,14 +49,13 @@ struct VPNSettingsSection: View {
         .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
         .onAppear {
             name = preferences.vpnDisplayName
-            interval = preferences.vpnIntervalMinutes
             endpoint = preferences.vpnURL
         }
     }
 
     private var previewPercentage: String {
         guard let used = store.states[.vpn]?.snapshot?.resourceUsage?.usedPercent else { return "--" }
-        return preferences.usageDisplayMode.displayedPercent(from: used)
+        return preferences.vpnDisplayMode.displayedPercent(from: used)
             .formatted(.number.precision(.fractionLength(1))) + "%"
     }
 
@@ -67,8 +64,7 @@ struct VPNSettingsSection: View {
             let url = try VPNEndpoint.validate(endpoint)
             preferences.vpnURL = url.absoluteString
             preferences.vpnName = name
-            preferences.vpnIntervalMinutes = interval
-            store.configureVPN(name: preferences.vpnDisplayName, intervalMinutes: interval, endpoint: url.absoluteString)
+            store.configureVPN(name: preferences.vpnDisplayName, endpoint: url.absoluteString)
             failed = false
             message = "已保存。"
             Task { await store.refresh(providerIDs: [.vpn], afterCurrent: true) }

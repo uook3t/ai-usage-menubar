@@ -72,8 +72,8 @@ final class AppPreferences {
     var vpnName: String {
         didSet { defaults.set(vpnName, forKey: "vpn.name") }
     }
-    var vpnIntervalMinutes: Int {
-        didSet { defaults.set(vpnIntervalMinutes, forKey: "vpn.interval") }
+    var vpnDisplayMode: UsageDisplayMode {
+        didSet { defaults.set(vpnDisplayMode.rawValue, forKey: "vpn.displayMode") }
     }
     var stackedMenuBar: Bool {
         didSet { defaults.set(stackedMenuBar, forKey: "menuBar.stacked") }
@@ -92,8 +92,12 @@ final class AppPreferences {
         self.defaults = defaults
         vpnURL = defaults.string(forKey: "vpn.url") ?? ""
         vpnName = defaults.string(forKey: "vpn.name") ?? "VPN"
-        let interval = defaults.integer(forKey: "vpn.interval")
-        vpnIntervalMinutes = interval == 0 ? 5 : min(max(interval, 1), 60)
+        let initialVPNMode = Self.value(UsageDisplayMode.self, forKey: "vpn.displayMode", in: defaults)
+            ?? Self.value(UsageDisplayMode.self, forKey: Key.usageDisplayMode, in: defaults)
+            ?? .defaultSelection
+        vpnDisplayMode = initialVPNMode
+        defaults.set(initialVPNMode.rawValue, forKey: "vpn.displayMode")
+        defaults.removeObject(forKey: "vpn.interval")
         stackedMenuBar = defaults.object(forKey: "menuBar.stacked") as? Bool ?? true
 
         let restoredProviders = Self.decode(

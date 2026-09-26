@@ -433,7 +433,8 @@ final class MenuBarController: NSObject, NSPopoverDelegate, NSWindowDelegate {
             (
                 groups: store.menuBarProviderReadings(
                     for: preferences.menuBarProviderConfigurations,
-                    displayMode: preferences.usageDisplayMode
+                    displayMode: preferences.usageDisplayMode,
+                    vpnDisplayMode: preferences.vpnDisplayMode
                 ),
                 trackedProviders: preferences.trackedProviderIDs,
                 refreshInterval: preferences.refreshInterval,
@@ -509,8 +510,9 @@ private struct DashboardRootView: View {
         DashboardView(
             store: store,
             launchAtLogin: launchAtLogin,
-            usageDisplayMode: $preferences.usageDisplayMode,
-            refreshInterval: $preferences.refreshInterval,
+            usageDisplayMode: preferences.usageDisplayMode,
+            vpnDisplayMode: preferences.vpnDisplayMode,
+            refreshInterval: preferences.refreshInterval,
             availableUpdateVersion: updateController.availableVersion,
             isCheckingForUpdates: updateController.isChecking,
             checkForUpdates: updateController.checkForUpdates,

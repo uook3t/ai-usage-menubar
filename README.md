@@ -1,4 +1,4 @@
-> **个人定制版**：基于 AI Usage v0.2.1，增加 VPN / JustMySocks 用量、可配置双行菜单栏、查询 URL 和独立刷新间隔。默认启用 Codex、Claude、VPN。VPN 配置统一使用 UserDefaults；本分支关闭官方自动更新。详见 [定制说明](docs/customization.md)。下方保留原项目介绍，其中官方更新、默认登录启动和不跨启动缓存等描述以定制说明为准。
+> **个人定制版**：基于 AI Usage v0.2.1，增加 VPN / JustMySocks 用量、可配置双行菜单栏、查询 URL、统一刷新间隔和独立的 AI / VPN 显示模式。默认启用 Codex、Claude、VPN。VPN 配置统一使用 UserDefaults；本分支关闭官方自动更新。详见 [定制说明](docs/customization.md)。下方保留原项目介绍，其中官方更新、默认登录启动和不跨启动缓存等描述以定制说明为准。
 
 <p align="center">
   <picture>
