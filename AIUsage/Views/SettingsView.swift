@@ -8,16 +8,48 @@ struct SettingsView: View {
     static let windowWidth: CGFloat = 620
     static let windowHeight: CGFloat = 460
 
+    @State private var selectedPage: SettingsPage = .general
+
+    private enum SettingsPage: String, CaseIterable, Identifiable {
+        case general = "通用"
+        case providers = "服务"
+        case vpn = "VPN"
+        var id: Self { self }
+    }
+
     var body: some View {
-        TabView {
-            settingsPage { generalSection }
-                .tabItem { Label("通用", systemImage: "gearshape") }
-            settingsPage { providersSection }
-                .tabItem { Label("服务", systemImage: "square.grid.2x2") }
-            settingsPage { VPNSettingsSection(store: store, preferences: preferences) }
-                .tabItem { Label("VPN", systemImage: "network") }
+        VStack(spacing: 0) {
+            Picker("设置分类", selection: Binding(
+                get: { selectedPage },
+                set: { page in
+                    var transaction = Transaction(animation: nil)
+                    transaction.disablesAnimations = true
+                    withTransaction(transaction) { selectedPage = page }
+                }
+            )) {
+                ForEach(SettingsPage.allCases) { page in
+                    Text(page.rawValue).tag(page)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .frame(width: 260)
+            .padding(.vertical, 16)
+
+            Divider()
+
+            // Keep each page mounted so switching never resets an unfinished edit.
+            ZStack(alignment: .topLeading) {
+                settingsPage { generalSection }
+                    .settingsPageVisibility(selectedPage == .general)
+                settingsPage { providersSection }
+                    .settingsPageVisibility(selectedPage == .providers)
+                settingsPage { VPNSettingsSection(store: store, preferences: preferences) }
+                    .settingsPageVisibility(selectedPage == .vpn)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .animation(nil, value: selectedPage)
         }
-        .padding(16)
         .frame(width: Self.windowWidth, height: Self.windowHeight)
         .background(Color(nsColor: .windowBackgroundColor))
         .onAppear {
@@ -426,5 +458,14 @@ private struct ProviderStatusPresentation {
             systemImage = "clock"
             color = .secondary
         }
+    }
+}
+
+private extension View {
+    func settingsPageVisibility(_ visible: Bool) -> some View {
+        opacity(visible ? 1 : 0)
+            .allowsHitTesting(visible)
+            .disabled(!visible)
+            .accessibilityHidden(!visible)
     }
 }

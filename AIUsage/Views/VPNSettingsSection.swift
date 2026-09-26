@@ -83,8 +83,11 @@ struct VPNSettingsSection: View {
 struct ResourceUsageView: View {
     let usage: ResourceUsage
     let displayMode: UsageDisplayMode
-    private var tint: Color {
+    private var progressTint: Color {
         usage.usedPercent >= 95 ? .red : usage.usedPercent >= 80 ? .orange : UsagePalette.normalUsage
+    }
+    private var valueTint: Color {
+        usage.usedPercent >= 95 ? .red : usage.usedPercent >= 80 ? .orange : Color(nsColor: .labelColor)
     }
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
@@ -92,9 +95,9 @@ struct ResourceUsageView: View {
                 Text(displayMode == .used ? "已用" : "剩余").foregroundStyle(.secondary)
                 Spacer()
                 Text("\(displayMode.displayedPercent(from: usage.usedPercent).formatted(.number.precision(.fractionLength(1))))%")
-                    .font(.title2.monospacedDigit().weight(.semibold)).foregroundStyle(tint)
+                    .font(.title2.monospacedDigit().weight(.semibold)).foregroundStyle(valueTint)
             }
-            ProgressView(value: displayMode.renderedFraction(from: usage.usedPercent)).tint(tint)
+            ProgressView(value: displayMode.renderedFraction(from: usage.usedPercent)).tint(progressTint)
             HStack {
                 value("已用", usage.used)
                 Spacer()

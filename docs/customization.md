@@ -7,8 +7,8 @@ Branch: `customization/vpn-usage`. Official repository is remote `upstream`; per
 ## Behavior
 
 - Claude Code, Codex and VPN are tracked by default. Other upstream providers remain available in Settings.
-- Default menu bar layout stacks a small provider name above its number. The independent, opaque settings window has General, Providers and VPN tabs; General can restore the upstream single-line layout. VPN's editable label is limited to 12 characters, defaults to VPN, and is shared with its dashboard card.
-- VPN follows the shared Left/Used control in the menu bar, percentage label and progress bar, with one decimal place. Orange at 80%, red at 95%; percentages above 100% remain visible while progress drawing is bounded.
+- Default menu bar layout stacks a small provider name above its number. The independent, opaque settings window uses a fixed segmented selector for General, Providers and VPN; switching has no content transition or window resizing and preserves unfinished VPN edits; General can restore the upstream single-line layout. VPN's editable label is limited to 12 characters, defaults to VPN, and is shared with its dashboard card.
+- VPN follows the shared Left/Used control in the menu bar, percentage label and progress bar, with one decimal place. Normal numbers use the system label color, while the progress bar stays teal. Orange at 80%, red at 95%; percentages above 100% remain visible while progress drawing is bounded.
 - VPN settings include a masked HTTPS query URL (with optional reveal), a name preview, and an independent 1–60 minute refresh interval, default 5 minutes. Save applies configuration and refreshes VPN.
 - The JustMySocks adapter reads `monthly_bw_limit_b`, `bw_counter_b`, and optional `bw_reset_day_of_month`. Decimal GB uses 1,000,000,000 bytes. The card shows used, limit, remaining, overage, monthly reset day without a separate update timestamp; the dashboard footer shows overall freshness. No exact reset time is inferred.
 - Transient failures preserve the last successful VPN data and show an error. The stacked menu item adds `!`; missing data is `--`.
@@ -25,6 +25,8 @@ VPN's last good numeric snapshot is cached in UserDefaults with an endpoint SHA-
 Requests use an ephemeral URLSession with no persistent cookies or cache, a 20-second request timeout and a 25-second resource timeout. Redirects are rejected to keep the query credential on its configured endpoint. Use the final HTTPS endpoint directly.
 
 ## Build / install
+
+Local checkout: `/Users/yanjun/Projects/ai-usage-menubar`.
 
 ```sh
 ./scripts/install.sh
