@@ -3,6 +3,7 @@ import SwiftUI
 struct VPNSettingsSection: View {
     let store: UsageStore
     @Bindable var preferences: AppPreferences
+    @State private var hasLoadedDraft = false
     @State private var endpoint = ""
     @State private var name = "VPN"
     @State private var reveal = false
@@ -48,8 +49,10 @@ struct VPNSettingsSection: View {
         .padding(14)
         .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
         .onAppear {
+            guard !hasLoadedDraft else { return }
             name = preferences.vpnDisplayName
             endpoint = preferences.vpnURL
+            hasLoadedDraft = true
         }
     }
 

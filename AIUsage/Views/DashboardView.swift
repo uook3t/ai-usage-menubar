@@ -150,12 +150,9 @@ struct DashboardContentView: View {
     var vpnDisplayMode: UsageDisplayMode = .remaining
 
     var body: some View {
-        VStack(spacing: 8) {
-            header
-            providerRows
-        }
-        .padding([.horizontal, .top], 10)
-        .padding(.bottom, 6)
+        providerRows
+            .padding([.horizontal, .top], 10)
+            .padding(.bottom, 6)
     }
 
     @ViewBuilder
@@ -189,13 +186,4 @@ struct DashboardContentView: View {
         ProviderID.allCases.filter(store.isProviderVisibleInDashboard)
     }
 
-    private var header: some View {
-        HStack {
-            Text("AI Usage")
-                .font(.headline.weight(.semibold))
-            Spacer()
-        }
-        .padding(.horizontal, 4)
-        .frame(height: 28)
-    }
 }
