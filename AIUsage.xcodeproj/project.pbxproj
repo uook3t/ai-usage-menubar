@@ -338,7 +338,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 0.2.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.burakgon.aiusage;
+				PRODUCT_BUNDLE_IDENTIFIER = local.yanjun.aiusage;
 				PRODUCT_MODULE_NAME = AIUsage;
 				PRODUCT_NAME = "AI Usage";
 				REGISTER_APP_GROUPS = NO;
@@ -364,7 +364,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 0.2.1;
-				PRODUCT_BUNDLE_IDENTIFIER = com.burakgon.aiusage;
+				PRODUCT_BUNDLE_IDENTIFIER = local.yanjun.aiusage;
 				PRODUCT_MODULE_NAME = AIUsage;
 				PRODUCT_NAME = "AI Usage";
 				REGISTER_APP_GROUPS = NO;
@@ -381,7 +381,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.burakgon.aiusage.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = local.yanjun.aiusage.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 6.0;
@@ -396,7 +396,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.burakgon.aiusage.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = local.yanjun.aiusage.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_VERSION = 6.0;

@@ -42,6 +42,44 @@ final class UsageStore {
     private(set) var lastSuccessfulRefreshAt: Date?
     private(set) var refreshInterval: RefreshIntervalOption
 
+    var vpnName = "VPN"
+    private(set) var vpnIntervalMinutes = 5
+    private var vpnTask: Task<Void, Never>?
+    private var vpnEndpoint: String?
+
+    func configureVPN(name: String, intervalMinutes: Int, endpoint: String?, restoreCache: Bool = false) {
+        vpnName = name
+        let changed = vpnEndpoint != endpoint
+        let intervalChanged = vpnIntervalMinutes != intervalMinutes
+        vpnIntervalMinutes = min(max(intervalMinutes, 1), 60)
+        vpnEndpoint = endpoint
+        if changed {
+            cancelRefresh()
+            states[.vpn] = ProviderState(provider: .vpn)
+            if restoreCache, let endpoint, let cached = VPNCache.load(endpoint: endpoint) {
+                states[.vpn]?.snapshot = cached
+                states[.vpn]?.failure = ProviderFailure(.transient, "显示上次成功数据，正在更新。")
+            }
+        }
+        if cadenceTask != nil, changed || intervalChanged {
+            vpnTask?.cancel()
+            vpnTask = makeVPNTask(refreshImmediately: false)
+        }
+    }
+
+    func resume() {
+        guard cadenceTask == nil else { return }
+        let aiStale = trackedProviderIDs.subtracting([.vpn]).contains { id in
+            guard let date = states[id]?.snapshot?.fetchedAt else { return true }
+            return Date().timeIntervalSince(date) >= Double(refreshInterval.duration.components.seconds)
+        }
+        cadenceTask = makeCadenceTask(refreshImmediately: aiStale, initialProviderIDs: trackedProviderIDs.subtracting([.vpn]))
+        let vpnStale = states[.vpn]?.snapshot.map {
+            Date().timeIntervalSince($0.fetchedAt) >= Double(vpnIntervalMinutes * 60)
+        } ?? true
+        vpnTask = makeVPNTask(refreshImmediately: vpnStale)
+    }
+
     private let providers: [any UsageProvider]
     private let availabilityChecker: any ProviderAvailabilityChecking
     private var cadenceTask: Task<Void, Never>?
@@ -56,7 +94,8 @@ final class UsageStore {
             AntigravityProvider(),
             CopilotProvider(),
             DevinProvider(),
-            GrokProvider()
+            GrokProvider(),
+            VPNProvider()
         ],
         availabilityChecker: any ProviderAvailabilityChecking =
             SystemProviderAvailabilityChecker(),
@@ -76,9 +115,12 @@ final class UsageStore {
         guard cadenceTask == nil else { return }
         LoginShellEnvironment.shared.prewarm()
         cadenceTask = makeCadenceTask(refreshImmediately: true)
+        vpnTask = makeVPNTask(refreshImmediately: false)
     }
 
     func stop() {
+        vpnTask?.cancel()
+        vpnTask = nil
         cadenceTask?.cancel()
         cadenceTask = nil
         cancelRefresh()
@@ -119,10 +161,13 @@ final class UsageStore {
         cadenceTask = makeCadenceTask(refreshImmediately: true)
     }
 
-    func refresh(providerIDs requestedProviderIDs: Set<ProviderID>? = nil) async {
-        if let refreshTask {
-            await refreshTask.value
-            return
+    func refresh(providerIDs requestedProviderIDs: Set<ProviderID>? = nil, afterCurrent: Bool = false) async {
+        while let activeTask = refreshTask {
+            let activeGeneration = refreshGeneration
+            await activeTask.value
+            guard !Task.isCancelled else { return }
+            if !afterCurrent { return }
+            if activeGeneration == refreshGeneration { refreshTask = nil }
         }
 
         refreshGeneration += 1
@@ -204,6 +249,7 @@ final class UsageStore {
               states[provider]?.isToolInstalled != false else {
             return []
         }
+        if provider == .vpn { return [MenuBarItemID(provider: .vpn, metric: .totalUsage)] }
         return states[provider]?.snapshot?.availableMenuBarItems ?? []
     }
 
@@ -237,7 +283,7 @@ final class UsageStore {
                 provider: item.provider,
                 metric: item.metric,
                 value: value,
-                displayMode: displayMode,
+                displayMode: item.provider == .vpn ? .used : displayMode,
                 isStale: state.isStale
             )
         }
@@ -309,6 +355,9 @@ final class UsageStore {
                 state.snapshot = snapshot
                 state.failure = nil
                 successfulDates.append(snapshot.fetchedAt)
+                if snapshot.provider == .vpn, let vpnEndpoint {
+                    VPNCache.save(snapshot, endpoint: vpnEndpoint)
+                }
             case .failure(let failure):
                 if !failure.preservesLastGood {
                     state.snapshot = nil
@@ -327,6 +376,19 @@ final class UsageStore {
         refreshGeneration += 1
         refreshTask?.cancel()
         refreshTask = nil
+        for id in ProviderID.allCases { states[id]?.isRefreshing = false }
+    }
+
+    private func makeVPNTask(refreshImmediately: Bool) -> Task<Void, Never> {
+        let seconds = vpnIntervalMinutes * 60
+        return Task { [weak self] in
+            if refreshImmediately { await self?.refresh(providerIDs: [.vpn], afterCurrent: true) }
+            while !Task.isCancelled {
+                do { try await Task.sleep(for: .seconds(seconds)) } catch { return }
+                guard !Task.isCancelled else { return }
+                await self?.refresh(providerIDs: [.vpn], afterCurrent: true)
+            }
+        }
     }
 
     private func makeCadenceTask(
@@ -345,7 +407,7 @@ final class UsageStore {
                     return
                 }
                 guard !Task.isCancelled else { return }
-                await self?.refresh()
+                await self?.refresh(providerIDs: self?.trackedProviderIDs.subtracting([.vpn]))
             }
         }
     }

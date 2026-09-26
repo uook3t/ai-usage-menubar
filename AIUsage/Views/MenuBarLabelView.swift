@@ -10,7 +10,7 @@ struct MenuBarPresentation: Equatable, Sendable {
         let subject = "\(provider) \(reading.metric.title)"
         switch reading.value {
         case .percentage(let percent):
-            valueText = "\(Int(percent.rounded()))%"
+            valueText = reading.provider == .vpn ? "\(percent.formatted(.number.precision(.fractionLength(1))))%" : "\(Int(percent.rounded()))%"
             let value =
                 "\(Int(percent.rounded())) percent \(reading.displayMode.valueSuffix)"
             accessibilityLabel = reading.isStale

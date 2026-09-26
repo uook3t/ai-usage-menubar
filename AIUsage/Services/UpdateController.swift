@@ -13,25 +13,18 @@ final class UpdateController: NSObject, SPUUpdaterDelegate {
     init(startingUpdater: Bool = true) {
         super.init()
         updaterController = SPUStandardUpdaterController(
-            startingUpdater: startingUpdater,
+            startingUpdater: false, // Custom builds must never install upstream binaries.
             updaterDelegate: self,
             userDriverDelegate: nil
         )
 
-        if startingUpdater {
-            isChecking = true
-            updaterController.updater.checkForUpdateInformation()
-        }
     }
 
     var isUpdateAvailable: Bool {
         availableVersion != nil
     }
 
-    func checkForUpdates() {
-        isChecking = true
-        updaterController.checkForUpdates(nil)
-    }
+    func checkForUpdates() {} // Updates are built from the customization branch.
 
     func updater(
         _ updater: SPUUpdater,

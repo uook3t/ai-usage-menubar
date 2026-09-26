@@ -448,7 +448,10 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
                     displayMode: preferences.usageDisplayMode
                 ),
                 trackedProviders: preferences.trackedProviderIDs,
-                refreshInterval: preferences.refreshInterval
+                refreshInterval: preferences.refreshInterval,
+                stacked: preferences.stackedMenuBar,
+                vpnName: preferences.vpnDisplayName,
+                vpnFailure: store.states[.vpn]?.failure
             )
         } onChange: { [weak self] in
             Task { @MainActor in
@@ -480,6 +483,10 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         button.attributedTitle = NSAttributedString()
         button.image = nil
         button.title = ""
+        if preferences.stackedMenuBar {
+            button.image = StackedStatusRenderer.image(groups: groups, vpnName: preferences.vpnDisplayName, vpnFailed: store.states[.vpn]?.failure != nil)
+            return
+        }
         button.image = MenuBarStatusImageRenderer.image(
             for: groups,
             font: button.font ?? NSFont.menuBarFont(ofSize: 0)

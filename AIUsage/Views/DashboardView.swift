@@ -174,7 +174,8 @@ struct DashboardContentView: View {
                 if let state = store.states[provider] {
                     ProviderSectionView(
                         state: state,
-                        displayMode: usageDisplayMode
+                        displayMode: usageDisplayMode,
+                        displayName: state.provider == .vpn ? store.vpnName : nil
                     )
                 }
             }

@@ -9,16 +9,19 @@ struct SettingsView: View {
     var showDashboard: @MainActor () -> Void = {}
 
     var body: some View {
+        ScrollView {
         GlassEffectContainer(spacing: 10) {
             VStack(alignment: .leading, spacing: 16) {
                 header
+                VPNSettingsSection(store: store, preferences: preferences)
                 providersSection
                 generalSection
                 footer
             }
         }
         .padding(20)
-        .frame(width: MenuBarPanelRoute.settings.width, alignment: .top)
+        }
+        .frame(width: MenuBarPanelRoute.settings.width, height: 720, alignment: .top)
         .onAppear {
             store.setTrackedProviders(preferences.trackedProviderIDs)
             store.setRefreshInterval(preferences.refreshInterval)
@@ -194,10 +197,8 @@ struct SettingsView: View {
 
     private var footer: some View {
         HStack(spacing: 12) {
-            Button("Check for Updates…") {
-                updateController.checkForUpdates()
-            }
-            .disabled(updateController.isChecking)
+            Text("定制版 · 手动更新")
+                .foregroundStyle(.secondary)
 
             if updateController.isChecking {
                 ProgressView()

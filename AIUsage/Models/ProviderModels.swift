@@ -8,6 +8,7 @@ enum ProviderID: String, CaseIterable, Codable, Identifiable, Sendable {
     case copilot
     case devin
     case grok
+    case vpn
 
     var id: Self { self }
 
@@ -20,6 +21,7 @@ enum ProviderID: String, CaseIterable, Codable, Identifiable, Sendable {
         case .copilot: "GitHub Copilot"
         case .devin: "Devin"
         case .grok: "Grok"
+        case .vpn: "VPN"
         }
     }
 
@@ -32,6 +34,7 @@ enum ProviderID: String, CaseIterable, Codable, Identifiable, Sendable {
         case .copilot: "ProviderCopilot"
         case .devin: "ProviderDevin"
         case .grok: "ProviderGrok"
+        case .vpn: ""
         }
     }
 
@@ -55,6 +58,7 @@ enum ProviderID: String, CaseIterable, Codable, Identifiable, Sendable {
         case .copilot: ["copilot", "github-copilot"]
         case .devin: ["devin"]
         case .grok: ["grok"]
+        case .vpn: []
         }
     }
 
@@ -90,12 +94,13 @@ enum ProviderID: String, CaseIterable, Codable, Identifiable, Sendable {
             ]
         case .grok:
             ["~/.grok"]
+        case .vpn: []
         }
     }
 
     var defaultMenuBarMetric: MenuBarMetricID {
         switch self {
-        case .cursor: .totalUsage
+        case .cursor, .vpn: .totalUsage
         case .copilot: .credits
         case .claude, .codex, .antigravity, .devin, .grok: .weekly
         }
@@ -365,6 +370,7 @@ struct ProviderSnapshot: Equatable, Sendable {
     let windows: [QuotaWindow]
     let billingUsage: BillingUsage?
     let fetchedAt: Date
+    var resourceUsage: ResourceUsage? = nil
 
     init(
         provider: ProviderID,
@@ -409,7 +415,7 @@ struct ProviderSnapshot: Equatable, Sendable {
     ) -> MenuBarReadingValue? {
         if let window = window(for: metric) {
             return .percentage(
-                displayMode.displayedPercent(from: window.usedPercent)
+                (provider == .vpn ? UsageDisplayMode.used : displayMode).displayedPercent(from: window.usedPercent)
             )
         }
         guard billingUsage?.menuBarMetric == metric else { return nil }

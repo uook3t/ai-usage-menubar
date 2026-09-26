@@ -66,6 +66,23 @@ final class AppPreferences {
         }
     }
 
+    var vpnURL: String {
+        didSet { defaults.set(vpnURL, forKey: "vpn.url") }
+    }
+    var vpnName: String {
+        didSet { defaults.set(vpnName, forKey: "vpn.name") }
+    }
+    var vpnIntervalMinutes: Int {
+        didSet { defaults.set(vpnIntervalMinutes, forKey: "vpn.interval") }
+    }
+    var stackedMenuBar: Bool {
+        didSet { defaults.set(stackedMenuBar, forKey: "menuBar.stacked") }
+    }
+    var vpnDisplayName: String {
+        let name = vpnName.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty ? "VPN" : String(name.prefix(12))
+    }
+
     @ObservationIgnored
     private let defaults: UserDefaults
     @ObservationIgnored
@@ -73,6 +90,11 @@ final class AppPreferences {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        vpnURL = defaults.string(forKey: "vpn.url") ?? ""
+        vpnName = defaults.string(forKey: "vpn.name") ?? "VPN"
+        let interval = defaults.integer(forKey: "vpn.interval")
+        vpnIntervalMinutes = interval == 0 ? 5 : min(max(interval, 1), 60)
+        stackedMenuBar = defaults.object(forKey: "menuBar.stacked") as? Bool ?? true
 
         let restoredProviders = Self.decode(
             [ProviderID].self,
@@ -80,7 +102,7 @@ final class AppPreferences {
             in: defaults
         )
         var initialTrackedProviders = Set(
-            restoredProviders ?? ProviderID.allCases
+            restoredProviders ?? [.claude, .codex, .vpn]
         )
         if restoredProviders != nil,
            defaults.object(forKey: Key.openUsageProvidersAdded) == nil {
@@ -309,7 +331,7 @@ final class AppPreferences {
     }
 
     private static var initialWeeklyMenuBarItems: [MenuBarItemID] {
-        [ProviderID.claude, .codex].map {
+        [ProviderID.claude, .codex, .vpn].map {
             MenuBarItemID(
                 provider: $0,
                 metric: $0.defaultMenuBarMetric

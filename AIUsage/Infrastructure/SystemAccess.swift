@@ -121,6 +121,7 @@ struct SystemProviderAvailabilityChecker: ProviderAvailabilityChecking {
             let path = environment.value(for: "PATH") ?? ""
 
             return Set(ProviderID.allCases.filter { provider in
+                if provider == .vpn { return true }
                 let descriptor = provider.descriptor
                 return descriptor.executableNames.contains {
                     Self.containsExecutable(named: $0, searchPath: path)

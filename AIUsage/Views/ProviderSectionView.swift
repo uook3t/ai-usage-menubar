@@ -4,13 +4,16 @@ import SwiftUI
 struct ProviderSectionView: View {
     let state: ProviderState
     let displayMode: UsageDisplayMode
+    var displayName: String? = nil
 
     init(
         state: ProviderState,
-        displayMode: UsageDisplayMode = .used
+        displayMode: UsageDisplayMode = .used,
+        displayName: String? = nil
     ) {
         self.state = state
         self.displayMode = displayMode
+        self.displayName = displayName
     }
 
     var body: some View {
@@ -18,7 +21,9 @@ struct ProviderSectionView: View {
             providerHeader
             if let snapshot = state.snapshot,
                !snapshot.windows.isEmpty || snapshot.billingUsage != nil {
-                if !snapshot.windows.isEmpty {
+                if let resource = snapshot.resourceUsage {
+                    ResourceUsageView(usage: resource, fetchedAt: snapshot.fetchedAt)
+                } else if !snapshot.windows.isEmpty {
                     QuotaGrid(
                         windows: snapshot.windows,
                         displayMode: displayMode
@@ -67,7 +72,7 @@ struct ProviderSectionView: View {
                 .foregroundStyle(.primary)
                 .frame(width: 18, height: 18)
 
-            Text(state.provider.displayName)
+            Text(displayName ?? state.provider.displayName)
                 .font(.headline.weight(.semibold))
 
             Spacer(minLength: 8)

@@ -26,7 +26,7 @@ final class AppPreferencesTests: XCTestCase {
 
         XCTAssertEqual(
             preferences.trackedProviderIDs,
-            Set(ProviderID.allCases)
+            Set([ProviderID.claude, .codex, .vpn])
         )
         XCTAssertEqual(preferences.visibleMenuBarProviderIDs, [])
         XCTAssertEqual(preferences.menuBarMetricSelections, [:])
@@ -46,7 +46,7 @@ final class AppPreferencesTests: XCTestCase {
 
         XCTAssertEqual(
             preferences.visibleMenuBarProviderIDs,
-            [.claude, .codex]
+            [.claude, .codex, .vpn]
         )
         XCTAssertEqual(
             preferences.selectedMenuBarMetrics(for: .claude),
@@ -73,7 +73,7 @@ final class AppPreferencesTests: XCTestCase {
 
         XCTAssertEqual(
             preferences.visibleMenuBarProviderIDs,
-            [.claude, .codex]
+            [.claude, .codex, .vpn]
         )
         XCTAssertEqual(
             preferences.selectedMenuBarMetrics(for: .claude),
@@ -95,7 +95,7 @@ final class AppPreferencesTests: XCTestCase {
 
         XCTAssertEqual(
             preferences.visibleMenuBarProviderIDs,
-            [.claude, .codex]
+            [.claude, .codex, .vpn]
         )
         XCTAssertEqual(
             preferences.selectedMenuBarMetrics(for: .claude),
@@ -384,7 +384,7 @@ final class AppPreferencesTests: XCTestCase {
 
         XCTAssertEqual(
             preferences.visibleMenuBarProviderIDs,
-            [.claude, .codex]
+            [.claude, .codex, .vpn]
         )
         XCTAssertEqual(
             preferences.selectedMenuBarMetrics(for: .claude),
@@ -429,7 +429,7 @@ final class AppPreferencesTests: XCTestCase {
 
             XCTAssertEqual(
                 afterUpdate.visibleMenuBarProviderIDs,
-                [.claude]
+                [.claude, .vpn]
             )
             XCTAssertEqual(
                 afterUpdate.selectedMenuBarMetrics(for: .claude),

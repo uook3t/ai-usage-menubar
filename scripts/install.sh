@@ -22,6 +22,8 @@ xcodebuild \
     -configuration Release \
     -destination 'platform=macOS' \
     -derivedDataPath "$derived_data_directory" \
+    CODE_SIGN_IDENTITY=- \
+    CODE_SIGNING_REQUIRED=NO \
     ENABLE_HARDENED_RUNTIME=NO \
     build
 

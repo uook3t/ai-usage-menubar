@@ -12,6 +12,10 @@ final class AppServices {
             refreshInterval: preferences.refreshInterval,
             trackedProviderIDs: preferences.trackedProviderIDs
         )
+        if startingUpdater {
+            store.configureVPN(name: preferences.vpnDisplayName, intervalMinutes: preferences.vpnIntervalMinutes,
+                               endpoint: preferences.vpnURL.isEmpty ? nil : preferences.vpnURL, restoreCache: true)
+        }
         launchAtLogin = LaunchAtLoginController()
         updateController = UpdateController(startingUpdater: startingUpdater)
     }

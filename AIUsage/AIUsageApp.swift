@@ -6,6 +6,20 @@ struct AIUsageApp: App {
     @NSApplicationDelegateAdaptor(AIUsageAppDelegate.self)
     private var appDelegate
 
+    init() {
+        if CommandLine.arguments.contains("--configure-vpn-stdin") {
+            do {
+                let input = FileHandle.standardInput.readDataToEndOfFile()
+                let url = try VPNEndpoint.validate(String(decoding: input, as: UTF8.self))
+                UserDefaults.standard.set(url.absoluteString, forKey: "vpn.url")
+                exit(0)
+            } catch {
+                fputs("VPN configuration failed.\n", stderr)
+                exit(1)
+            }
+        }
+    }
+
     var body: some Scene {
         Settings {
             EmptyView()
@@ -26,9 +40,8 @@ final class AIUsageAppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard !Self.isRunningTests else { return }
 
-        if Self.isInstalledInApplicationsFolder {
-            services.launchAtLogin.enableByDefaultIfNeeded()
-        }
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(willSleep), name: NSWorkspace.willSleepNotification, object: nil)
+        NSWorkspace.shared.notificationCenter.addObserver(self, selector: #selector(didWake), name: NSWorkspace.didWakeNotification, object: nil)
 
         let services = self.services
         let menuBarController = MenuBarController(
@@ -56,6 +69,14 @@ final class AIUsageAppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillTerminate(_ notification: Notification) {
         menuBarController?.stop()
         menuBarController = nil
+    }
+
+    @objc private func willSleep() { services.store.stop() }
+    @objc private func didWake() { services.store.resume() }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        menuBarController?.showSettings()
+        return true
     }
 
     @objc
@@ -87,6 +108,13 @@ final class AIUsageAppDelegate: NSObject, NSApplicationDelegate {
         appMenuItem.submenu = appMenu
         mainMenu.addItem(appMenuItem)
 
+        let editItem = NSMenuItem()
+        let editMenu = NSMenu(title: "Edit")
+        for (title, action, key) in [("Cut", "cut:", "x"), ("Copy", "copy:", "c"), ("Paste", "paste:", "v"), ("Select All", "selectAll:", "a")] {
+            editMenu.addItem(withTitle: title, action: Selector(action), keyEquivalent: key)
+        }
+        editItem.submenu = editMenu
+        mainMenu.addItem(editItem)
         NSApplication.shared.mainMenu = mainMenu
     }
 

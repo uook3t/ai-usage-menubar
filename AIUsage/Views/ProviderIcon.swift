@@ -13,6 +13,11 @@ struct ProviderIcon: View {
     }
 
     static func templateImage(for provider: ProviderID, size: CGFloat) -> NSImage {
+        if provider == .vpn, let image = NSImage(systemSymbolName: "network", accessibilityDescription: nil) {
+            image.size = NSSize(width: size, height: size)
+            image.isTemplate = true
+            return image
+        }
         guard let source = NSImage(named: provider.iconAssetName),
               let image = source.copy() as? NSImage else {
             return NSImage(size: NSSize(width: size, height: size))

@@ -5,3 +5,5 @@ build/
 *.xcuserstate
 xcuserdata/
 design-qa.md
+
+*.profraw

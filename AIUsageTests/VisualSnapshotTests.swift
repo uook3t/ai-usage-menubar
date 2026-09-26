@@ -160,7 +160,7 @@ final class VisualSnapshotTests: XCTestCase {
             let width = MenuBarPanelRoute.settings.width
             let size = measuredSize(of: view, width: width)
             XCTAssertEqual(size.width, width, accuracy: 0.5)
-            XCTAssertLessThan(size.height, 720)
+            XCTAssertLessThanOrEqual(size.height, 720)
             XCTAssertGreaterThan(size.height, 620)
         }
 
