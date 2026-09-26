@@ -7,10 +7,10 @@ Branch: `customization/vpn-usage`. Official repository is remote `upstream`; per
 ## Behavior
 
 - Claude Code, Codex and VPN are tracked by default. Other upstream providers remain available in Settings.
-- Default menu bar layout stacks a small provider name above its number. Settings can restore the upstream single-line layout. VPN's editable label is limited to 12 characters, defaults to VPN, and is shared with its dashboard card.
-- VPN always reports **used** percentage, one decimal place, independently of the AI providers' Left/Used control. Orange at 80%, red at 95%; percentages above 100% remain visible while progress drawing is bounded.
+- Default menu bar layout stacks a small provider name above its number. The independent, opaque settings window has General, Providers and VPN tabs; General can restore the upstream single-line layout. VPN's editable label is limited to 12 characters, defaults to VPN, and is shared with its dashboard card.
+- VPN follows the shared Left/Used control in the menu bar, percentage label and progress bar, with one decimal place. Orange at 80%, red at 95%; percentages above 100% remain visible while progress drawing is bounded.
 - VPN settings include a masked HTTPS query URL (with optional reveal), a name preview, and an independent 1–60 minute refresh interval, default 5 minutes. Save applies configuration and refreshes VPN.
-- The JustMySocks adapter reads `monthly_bw_limit_b`, `bw_counter_b`, and optional `bw_reset_day_of_month`. Decimal GB uses 1,000,000,000 bytes. The card shows used, limit, remaining, overage, monthly reset day and last successful update. No exact reset time is inferred.
+- The JustMySocks adapter reads `monthly_bw_limit_b`, `bw_counter_b`, and optional `bw_reset_day_of_month`. Decimal GB uses 1,000,000,000 bytes. The card shows used, limit, remaining, overage, monthly reset day without a separate update timestamp; the dashboard footer shows overall freshness. No exact reset time is inferred.
 - Transient failures preserve the last successful VPN data and show an error. The stacked menu item adds `!`; missing data is `--`.
 - Sleep stops requests/timers; wake resumes them and immediately refreshes stale data.
 - Launch at Login starts off. Registration and unregistration were verified on the installed local build.
@@ -30,7 +30,7 @@ Requests use an ephemeral URLSession with no persistent cookies or cache, a 20-s
 ./scripts/install.sh
 ```
 
-The custom bundle identifier is `local.yanjun.aiusage`; the installer uses local ad-hoc signing and installs `~/Applications/AI Usage.app`. This is a local build, not a notarized distribution. The original VPNUsage app is kept separately as a rollback option.
+The custom bundle identifier is `local.yanjun.aiusage`; the installer uses local ad-hoc signing and installs `~/Applications/AI Usage.app`. This is a local build, not a notarized distribution. The original VPNUsage source and app were moved to Trash after unregistering its login item. Its old preferences and Keychain endpoint were removed; research notes were retained under `docs/research`.
 
 For one-time local provisioning, the executable accepts `--configure-vpn-stdin`. The URL is read from standard input rather than process arguments. Prefer the Settings UI for normal use.
 
@@ -42,6 +42,6 @@ The customized surface is concentrated in the VPN provider files, stacked menu r
 
 ## Validation
 
-The complete 100-test suite passed after the implementation and storage changes. Two additional focused tests cover late responses after endpoint changes and VPN preference persistence. Release build and signature verification passed. Actual Codex and VPN requests succeeded; Claude currently reports that its CLI login is missing.
+The updated 101-test suite passed, including independent settings-window lifecycle, shared VPN display mode, late responses after endpoint changes and VPN preference persistence. Release build and signature verification passed. Actual Codex and VPN requests succeeded; Claude currently reports that its CLI login is missing.
 
 UI checks covered masked URL, Chinese labels, interval changes, default restoration and login startup on/off. A temporary one-minute interval produced a later persisted fetch timestamp; restored to five minutes. Physical sleep/wake and logout/login were not exercised to avoid interrupting the session.

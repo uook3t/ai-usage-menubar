@@ -14,7 +14,7 @@ final class VPNProviderTests: XCTestCase {
         guard case .percentage(let percent) = snapshot.menuBarValue(for: .totalUsage, displayMode: .remaining) else {
             return XCTFail("Expected percentage")
         }
-        XCTAssertEqual(percent, 1.586, accuracy: 0.0001)
+        XCTAssertEqual(percent, 98.414, accuracy: 0.0001)
     }
 
     func testOverageAndInvalidPayloads() throws {
@@ -68,7 +68,7 @@ final class VPNProviderTests: XCTestCase {
     }
 
     @MainActor
-    func testFailurePreservesLastGoodAndMenuShowsUsed() async throws {
+    func testFailurePreservesLastGoodAndMenuFollowsDisplayMode() async throws {
         let snapshot = try VPNProvider.decode(valid, fetchedAt: .now)
         let provider = SequencedProvider(id: .vpn, results: [.success(snapshot), .failure(ProviderFailure(.transient, "HTTP 500"))])
         let store = UsageStore(providers: [provider])
@@ -77,8 +77,10 @@ final class VPNProviderTests: XCTestCase {
         XCTAssertEqual(store.states[.vpn]?.snapshot, snapshot)
         XCTAssertEqual(store.states[.vpn]?.isStale, true)
         let reading = try XCTUnwrap(store.menuBarReading(for: MenuBarItemID(provider: .vpn, metric: .totalUsage), displayMode: .remaining))
-        XCTAssertEqual(reading.displayMode, .used)
-        XCTAssertEqual(MenuBarPresentation(reading: reading).valueText, "1.6%")
+        XCTAssertEqual(reading.displayMode, .remaining)
+        XCTAssertEqual(MenuBarPresentation(reading: reading).valueText, "98.4%")
+        let used = try XCTUnwrap(store.menuBarReading(for: MenuBarItemID(provider: .vpn, metric: .totalUsage), displayMode: .used))
+        XCTAssertEqual(MenuBarPresentation(reading: used).valueText, "1.6%")
     }
 
     @MainActor

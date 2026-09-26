@@ -415,7 +415,7 @@ struct ProviderSnapshot: Equatable, Sendable {
     ) -> MenuBarReadingValue? {
         if let window = window(for: metric) {
             return .percentage(
-                (provider == .vpn ? UsageDisplayMode.used : displayMode).displayedPercent(from: window.usedPercent)
+                displayMode.displayedPercent(from: window.usedPercent)
             )
         }
         guard billingUsage?.menuBarMetric == metric else { return nil }

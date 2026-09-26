@@ -136,7 +136,7 @@ final class VisualSnapshotTests: XCTestCase {
         XCTAssertGreaterThan(size.height, 250)
     }
 
-    func testSettingsShowsEveryProviderInLightAndDark() async {
+    func testSettingsWindowFitsInLightAndDark() async {
         let store = await makeFullyPopulatedStore()
         let suiteName = "VisualSnapshotTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
@@ -152,16 +152,15 @@ final class VisualSnapshotTests: XCTestCase {
                 preferences: preferences,
                 launchAtLogin: LaunchAtLoginController(
                     service: SnapshotLoginService()
-                ),
-                updateController: UpdateController(startingUpdater: false)
+                )
             )
             .environment(\.colorScheme, colorScheme)
 
-            let width = MenuBarPanelRoute.settings.width
+            let width = SettingsView.windowWidth
             let size = measuredSize(of: view, width: width)
             XCTAssertEqual(size.width, width, accuracy: 0.5)
             XCTAssertLessThanOrEqual(size.height, 720)
-            XCTAssertGreaterThan(size.height, 620)
+            XCTAssertEqual(size.height, SettingsView.windowHeight)
         }
 
         defaults.removePersistentDomain(forName: suiteName)

@@ -21,17 +21,7 @@ final class MenuBarControllerTests: XCTestCase {
         XCTAssertFalse(gate.consumeSuppression())
     }
 
-    func testSettingsRouteExpandsTheSameCompactMenuBarPanel() {
-        XCTAssertEqual(MenuBarPanelRoute.dashboard.width, 392)
-        XCTAssertEqual(MenuBarPanelRoute.settings.width, 560)
-        XCTAssertGreaterThan(
-            MenuBarPanelRoute.settings.width,
-            MenuBarPanelRoute.dashboard.width
-        )
-        XCTAssertLessThan(MenuBarPanelRoute.settings.width, 600)
-    }
-
-    func testOpeningPanelActivatesApplicationBeforePresentation() {
+    func testSettingsUsesIndependentWindowAndReleasesItOnClose() {
         let suiteName = "MenuBarControllerTests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suiteName)!
         defaults.removePersistentDomain(forName: suiteName)
@@ -55,6 +45,18 @@ final class MenuBarControllerTests: XCTestCase {
         controller.showSettings()
 
         XCTAssertEqual(application.activationCount, 1)
+        let window = controller.settingsWindow
+        XCTAssertNotNil(window)
+        XCTAssertEqual(window?.title, "AI Usage 设置")
+        XCTAssertEqual(window?.isOpaque, true)
+        XCTAssertTrue(window?.styleMask.contains(.titled) ?? false)
+        controller.showSettings()
+        XCTAssertTrue(controller.settingsWindow === window)
+        window?.close()
+        XCTAssertNil(controller.settingsWindow)
+        controller.showSettings()
+        XCTAssertNotNil(controller.settingsWindow)
+        XCTAssertFalse(controller.settingsWindow === window)
 
         controller.stop()
         defaults.removePersistentDomain(forName: suiteName)

@@ -283,7 +283,7 @@ final class UsageStore {
                 provider: item.provider,
                 metric: item.metric,
                 value: value,
-                displayMode: item.provider == .vpn ? .used : displayMode,
+                displayMode: displayMode,
                 isStale: state.isStale
             )
         }

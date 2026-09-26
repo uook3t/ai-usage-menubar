@@ -241,20 +241,17 @@ enum MenuBarStatusImageRenderer {
 
 enum MenuBarPanelRoute: Equatable {
     case dashboard
-    case settings
 
     var width: CGFloat {
         switch self {
         case .dashboard:
             392
-        case .settings:
-            560
         }
     }
 }
 
 @MainActor
-final class MenuBarController: NSObject, NSPopoverDelegate {
+final class MenuBarController: NSObject, NSPopoverDelegate, NSWindowDelegate {
     private let store: UsageStore
     private let preferences: AppPreferences
     private let launchAtLogin: LaunchAtLoginController
@@ -264,7 +261,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
 
     private var statusItem: NSStatusItem?
     private var popover: NSPopover?
-    private var panelRoute: MenuBarPanelRoute = .dashboard
+    private(set) var settingsWindow: NSWindow?
     private var isStarted = false
     private var toggleGate = PanelToggleGate()
 
@@ -312,6 +309,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         store.stop()
         popover?.performClose(nil)
         releasePanel()
+        settingsWindow?.close()
 
         if let statusItem {
             statusBar.removeStatusItem(statusItem)
@@ -326,28 +324,44 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         if popover?.isShown == true {
             popover?.performClose(sender)
         } else {
-            showPanel(route: .dashboard)
+            showPanel()
         }
     }
 
     func showSettings() {
         guard isStarted else { return }
         preferences.markInitialSetupCompleted()
-        showPanel(route: .settings)
-    }
-
-    private func showDashboard() {
-        showPanel(route: .dashboard)
-    }
-
-    private func showPanel(route: MenuBarPanelRoute) {
-        guard let button = statusItem?.button else { return }
-
-        if let popover, popover.isShown {
-            guard panelRoute != route else { return }
-            installContent(for: route, in: popover)
-            return
+        popover?.performClose(nil)
+        if settingsWindow == nil {
+            let window = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: SettingsView.windowWidth, height: SettingsView.windowHeight),
+                styleMask: [.titled, .closable, .miniaturizable],
+                backing: .buffered,
+                defer: false
+            )
+            window.title = "AI Usage 设置"
+            window.isReleasedWhenClosed = false
+            window.backgroundColor = .windowBackgroundColor
+            window.isOpaque = true
+            window.delegate = self
+            window.contentViewController = NSHostingController(rootView: SettingsView(
+                store: store, preferences: preferences, launchAtLogin: launchAtLogin
+            ))
+            window.center()
+            settingsWindow = window
         }
+        application.activate()
+        settingsWindow?.makeKeyAndOrderFront(nil)
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow, window === settingsWindow else { return }
+        window.contentViewController = nil
+        settingsWindow = nil
+    }
+
+    private func showPanel() {
+        guard let button = statusItem?.button else { return }
 
         let popover = NSPopover()
         popover.behavior = .transient
@@ -358,7 +372,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         // Status-item clicks do not activate an LSUIElement app automatically.
         // Activate first so Liquid Glass resolves its active appearance.
         application.activate()
-        installContent(for: route, in: popover)
+        installDashboard(in: popover)
         popover.show(
             relativeTo: button.bounds,
             of: button,
@@ -367,55 +381,30 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         popover.contentViewController?.view.window?.makeKey()
     }
 
-    private func installContent(
-        for route: MenuBarPanelRoute,
-        in popover: NSPopover
-    ) {
-        let rootView: AnyView
-        switch route {
-        case .dashboard:
-            rootView = AnyView(
-                DashboardRootView(
-                    store: store,
-                    launchAtLogin: launchAtLogin,
-                    preferences: preferences,
-                    updateController: updateController,
-                    openSettings: { [weak self] in
-                        self?.showSettings()
-                    }
-                )
-            )
-        case .settings:
-            rootView = AnyView(
-                SettingsRootView(
-                    store: store,
-                    preferences: preferences,
-                    launchAtLogin: launchAtLogin,
-                    updateController: updateController,
-                    showDashboard: { [weak self] in
-                        self?.showDashboard()
-                    }
-                )
-            )
-        }
-
+    private func installDashboard(in popover: NSPopover) {
+        let rootView = DashboardRootView(
+            store: store,
+            launchAtLogin: launchAtLogin,
+            preferences: preferences,
+            updateController: updateController,
+            openSettings: { [weak self] in self?.showSettings() }
+        )
         let hostingController = NSHostingController(rootView: rootView)
         hostingController.sizingOptions = [.preferredContentSize]
 
         let measuredSize = hostingController.sizeThatFits(
             in: NSSize(
-                width: route.width,
+                width: MenuBarPanelRoute.dashboard.width,
                 height: .greatestFiniteMagnitude
             )
         )
         let contentSize = NSSize(
-            width: route.width,
+            width: MenuBarPanelRoute.dashboard.width,
             height: ceil(measuredSize.height)
         )
         hostingController.preferredContentSize = contentSize
         popover.contentViewController = hostingController
         popover.contentSize = contentSize
-        panelRoute = route
     }
 
     func popoverDidClose(_ notification: Notification) {
@@ -434,7 +423,6 @@ final class MenuBarController: NSObject, NSPopoverDelegate {
         popover?.delegate = nil
         popover?.contentViewController = nil
         popover = nil
-        panelRoute = .dashboard
     }
 
     private func trackMenuBarState() {
@@ -527,24 +515,6 @@ private struct DashboardRootView: View {
             isCheckingForUpdates: updateController.isChecking,
             checkForUpdates: updateController.checkForUpdates,
             openSettings: openSettings
-        )
-    }
-}
-
-private struct SettingsRootView: View {
-    let store: UsageStore
-    @Bindable var preferences: AppPreferences
-    @Bindable var launchAtLogin: LaunchAtLoginController
-    @Bindable var updateController: UpdateController
-    let showDashboard: @MainActor () -> Void
-
-    var body: some View {
-        SettingsView(
-            store: store,
-            preferences: preferences,
-            launchAtLogin: launchAtLogin,
-            updateController: updateController,
-            showDashboard: showDashboard
         )
     }
 }

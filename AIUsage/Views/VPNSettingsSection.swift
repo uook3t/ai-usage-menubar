@@ -17,7 +17,7 @@ struct VPNSettingsSection: View {
                 Spacer()
                 VStack(spacing: -1) {
                     Text(name.isEmpty ? "VPN" : String(name.prefix(12))).font(.system(size: 9))
-                    Text("1.6%").font(.system(size: 11, weight: .medium).monospacedDigit())
+                    Text(previewPercentage).font(.system(size: 11, weight: .medium).monospacedDigit())
                 }
                 .padding(.horizontal, 12).padding(.vertical, 4)
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
@@ -41,23 +41,25 @@ struct VPNSettingsSection: View {
             HStack {
                 Stepper("每 \(interval) 分钟刷新", value: $interval, in: 1...60)
                 Spacer()
-                Button("保存并刷新", action: save).buttonStyle(.glassProminent)
+                Button("保存并刷新", action: save).buttonStyle(.borderedProminent)
             }
-            Toggle("菜单栏双行显示（名称 / 数字）", isOn: $preferences.stackedMenuBar)
-                .toggleStyle(.checkbox)
-            Text("JustMySocks · 地址保存在本机配置 · VPN 固定显示已用百分比")
-                .font(.caption).foregroundStyle(.secondary)
             if let message {
                 Text(message).font(.caption).foregroundStyle(failed ? .red : .secondary)
             }
         }
         .padding(14)
-        .glassEffect(.regular, in: .rect(cornerRadius: 14))
+        .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
         .onAppear {
             name = preferences.vpnDisplayName
             interval = preferences.vpnIntervalMinutes
             endpoint = preferences.vpnURL
         }
+    }
+
+    private var previewPercentage: String {
+        guard let used = store.states[.vpn]?.snapshot?.resourceUsage?.usedPercent else { return "--" }
+        return preferences.usageDisplayMode.displayedPercent(from: used)
+            .formatted(.number.precision(.fractionLength(1))) + "%"
     }
 
     private func save() {
@@ -80,19 +82,19 @@ struct VPNSettingsSection: View {
 
 struct ResourceUsageView: View {
     let usage: ResourceUsage
-    let fetchedAt: Date
+    let displayMode: UsageDisplayMode
     private var tint: Color {
         usage.usedPercent >= 95 ? .red : usage.usedPercent >= 80 ? .orange : UsagePalette.normalUsage
     }
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack(alignment: .firstTextBaseline) {
-                Text("已用").foregroundStyle(.secondary)
+                Text(displayMode == .used ? "已用" : "剩余").foregroundStyle(.secondary)
                 Spacer()
-                Text("\(usage.usedPercent.formatted(.number.precision(.fractionLength(1))))%")
+                Text("\(displayMode.displayedPercent(from: usage.usedPercent).formatted(.number.precision(.fractionLength(1))))%")
                     .font(.title2.monospacedDigit().weight(.semibold)).foregroundStyle(tint)
             }
-            ProgressView(value: usage.fraction).tint(tint)
+            ProgressView(value: displayMode.renderedFraction(from: usage.usedPercent)).tint(tint)
             HStack {
                 value("已用", usage.used)
                 Spacer()
@@ -102,8 +104,6 @@ struct ResourceUsageView: View {
             }
             if usage.overage > 0 { Text("已超额 \(usage.formatted(usage.overage))").foregroundStyle(.red) }
             if let day = usage.resetDay { Text("每月 \(day) 日重置").foregroundStyle(.secondary) }
-            Text("更新于 \(fetchedAt.formatted(date: .abbreviated, time: .standard))")
-                .font(.caption2).foregroundStyle(.secondary)
         }
         .font(.caption)
         .padding(.horizontal, 14).padding(.bottom, 12)

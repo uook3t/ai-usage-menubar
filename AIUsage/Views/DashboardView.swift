@@ -83,7 +83,7 @@ struct DashboardView: View {
                 }
                 .help("Settings")
                 .accessibilityLabel("Settings")
-                .accessibilityHint("Shows settings in the menu bar panel")
+                .accessibilityHint("Opens the settings window")
             }
             .buttonStyle(.plain)
             .glassEffect(.regular, in: .capsule)

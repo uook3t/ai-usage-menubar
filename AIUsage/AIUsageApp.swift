@@ -113,6 +113,8 @@ final class AIUsageAppDelegate: NSObject, NSApplicationDelegate {
         for (title, action, key) in [("Cut", "cut:", "x"), ("Copy", "copy:", "c"), ("Paste", "paste:", "v"), ("Select All", "selectAll:", "a")] {
             editMenu.addItem(withTitle: title, action: Selector(action), keyEquivalent: key)
         }
+        editMenu.addItem(.separator())
+        editMenu.addItem(withTitle: "Close Window", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
         editItem.submenu = editMenu
         mainMenu.addItem(editItem)
         NSApplication.shared.mainMenu = mainMenu

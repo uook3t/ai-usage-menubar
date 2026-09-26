@@ -22,7 +22,7 @@ struct ProviderSectionView: View {
             if let snapshot = state.snapshot,
                !snapshot.windows.isEmpty || snapshot.billingUsage != nil {
                 if let resource = snapshot.resourceUsage {
-                    ResourceUsageView(usage: resource, fetchedAt: snapshot.fetchedAt)
+                    ResourceUsageView(usage: resource, displayMode: displayMode)
                 } else if !snapshot.windows.isEmpty {
                     QuotaGrid(
                         windows: snapshot.windows,

@@ -5,23 +5,21 @@ struct SettingsView: View {
     @Bindable var store: UsageStore
     @Bindable var preferences: AppPreferences
     @Bindable var launchAtLogin: LaunchAtLoginController
-    @Bindable var updateController: UpdateController
-    var showDashboard: @MainActor () -> Void = {}
+    static let windowWidth: CGFloat = 620
+    static let windowHeight: CGFloat = 460
 
     var body: some View {
-        ScrollView {
-        GlassEffectContainer(spacing: 10) {
-            VStack(alignment: .leading, spacing: 16) {
-                header
-                VPNSettingsSection(store: store, preferences: preferences)
-                providersSection
-                generalSection
-                footer
-            }
+        TabView {
+            settingsPage { generalSection }
+                .tabItem { Label("通用", systemImage: "gearshape") }
+            settingsPage { providersSection }
+                .tabItem { Label("服务", systemImage: "square.grid.2x2") }
+            settingsPage { VPNSettingsSection(store: store, preferences: preferences) }
+                .tabItem { Label("VPN", systemImage: "network") }
         }
-        .padding(20)
-        }
-        .frame(width: MenuBarPanelRoute.settings.width, height: 720, alignment: .top)
+        .padding(16)
+        .frame(width: Self.windowWidth, height: Self.windowHeight)
+        .background(Color(nsColor: .windowBackgroundColor))
         .onAppear {
             store.setTrackedProviders(preferences.trackedProviderIDs)
             store.setRefreshInterval(preferences.refreshInterval)
@@ -32,20 +30,11 @@ struct SettingsView: View {
         }
     }
 
-    private var header: some View {
-        HStack(spacing: 12) {
-            Button(action: showDashboard) {
-                Label("Usage", systemImage: "chevron.left")
-            }
-            .buttonStyle(.glass)
-            .controlSize(.small)
-            .help("Back to usage")
-            .accessibilityHint("Shows the usage dashboard")
-
-            Text("Settings")
-                .font(.title3.weight(.semibold))
-
-            Spacer()
+    private func settingsPage<Content: View>(@ViewBuilder content: () -> Content) -> some View {
+        ScrollView {
+            content()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(20)
         }
     }
 
@@ -60,7 +49,7 @@ struct SettingsView: View {
             providerRows
                 .padding(.horizontal, 12)
                 .padding(.vertical, 4)
-                .glassEffect(.regular, in: .rect(cornerRadius: 14))
+                .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 12))
         }
     }
 
@@ -151,7 +140,14 @@ struct SettingsView: View {
                 }
 
                 GridRow {
-                    Text("Refresh")
+                    Text("菜单栏")
+                        .foregroundStyle(.secondary)
+                    Toggle("双行显示（名称 / 数字）", isOn: $preferences.stackedMenuBar)
+                        .toggleStyle(.checkbox)
+                }
+
+                GridRow {
+                    Text("AI 刷新间隔")
                         .foregroundStyle(.secondary)
 
                     Picker("Refresh", selection: $preferences.refreshInterval) {
@@ -193,28 +189,6 @@ struct SettingsView: View {
             }
             .padding(.leading, 12)
         }
-    }
-
-    private var footer: some View {
-        HStack(spacing: 12) {
-            Text("定制版 · 手动更新")
-                .foregroundStyle(.secondary)
-
-            if updateController.isChecking {
-                ProgressView()
-                    .controlSize(.small)
-            }
-
-            Link("Star on GitHub", destination: AppLinks.repository)
-
-            Spacer()
-
-            Button("Quit AI Usage") {
-                NSApplication.shared.terminate(nil)
-            }
-        }
-        .controlSize(.small)
-        .padding(.top, 2)
     }
 
     private func sectionHeader(

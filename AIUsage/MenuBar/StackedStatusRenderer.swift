@@ -17,7 +17,9 @@ enum StackedStatusRenderer {
             let stale = group.readings.contains(where: \.isStale) || (group.provider == .vpn && vpnFailed)
             let value = (readings.isEmpty ? "--" : readings.joined(separator: " · ")) + (stale ? " !" : "")
             var color = NSColor.labelColor
-            if group.provider == .vpn, case .percentage(let used) = group.readings.first?.value {
+            if group.provider == .vpn, let reading = group.readings.first,
+               case .percentage(let value) = reading.value {
+                let used = reading.displayMode == .used ? value : 100 - value
                 if used >= 95 { color = .systemRed } else if used >= 80 { color = .systemOrange }
             }
             let titleWidth = (title as NSString).size(withAttributes: [.font: titleFont]).width

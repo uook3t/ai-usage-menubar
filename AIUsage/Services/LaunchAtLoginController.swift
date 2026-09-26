@@ -23,7 +23,7 @@ struct MainAppLaunchAtLoginService: LaunchAtLoginServicing {
         case .notRegistered: .notRegistered
         case .enabled: .enabled
         case .requiresApproval: .requiresApproval
-        case .notFound: .unavailable
+        case .notFound: .notRegistered
         @unknown default: .unavailable
         }
     }
