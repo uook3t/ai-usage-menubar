@@ -260,6 +260,7 @@ final class MenuBarController: NSObject, NSPopoverDelegate, NSWindowDelegate {
     private let application: any ApplicationActivating
 
     private var statusItem: NSStatusItem?
+    private let stackedStatusView = StackedStatusView(frame: .zero)
     private var popover: NSPopover?
     private(set) var settingsWindow: NSWindow?
     private var isStarted = false
@@ -462,6 +463,11 @@ final class MenuBarController: NSObject, NSPopoverDelegate, NSWindowDelegate {
         button.toolTip = collectionPresentation.accessibilityLabel
         button.setAccessibilityLabel(collectionPresentation.accessibilityLabel)
 
+        if !preferences.stackedMenuBar || groups.isEmpty {
+            stackedStatusView.removeFromSuperview()
+            statusItem?.length = NSStatusItem.variableLength
+        }
+
         guard !groups.isEmpty else {
             button.attributedTitle = NSAttributedString()
             button.image = statusImage(for: nil)
@@ -473,7 +479,13 @@ final class MenuBarController: NSObject, NSPopoverDelegate, NSWindowDelegate {
         button.image = nil
         button.title = ""
         if preferences.stackedMenuBar {
-            button.image = StackedStatusRenderer.image(groups: groups, vpnName: preferences.vpnDisplayName, vpnFailed: store.states[.vpn]?.failure != nil)
+            let image = StackedStatusRenderer.image(groups: groups, vpnName: preferences.vpnDisplayName, vpnFailed: store.states[.vpn]?.failure != nil)
+            statusItem?.length = image.size.width
+            stackedStatusView.frame = NSRect(origin: .zero, size: image.size)
+            stackedStatusView.image = image
+            if stackedStatusView.superview !== button {
+                button.addSubview(stackedStatusView)
+            }
             return
         }
         button.image = MenuBarStatusImageRenderer.image(

@@ -15,10 +15,10 @@ struct VPNSettingsSection: View {
             HStack {
                 Label("VPN 用量", systemImage: "network").font(.headline)
                 Spacer()
-                VStack(spacing: -1) {
-                    Text(name.isEmpty ? "VPN" : String(name.prefix(12))).font(.system(size: 9))
-                    Text(previewPercentage).font(.system(size: 11, weight: .medium).monospacedDigit())
-                }
+                Image(nsImage: StackedStatusRenderer.preview(
+                    name: name.isEmpty ? "VPN" : String(name.prefix(12)),
+                    value: previewPercentage
+                ))
                 .padding(.horizontal, 12).padding(.vertical, 4)
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))
                 .accessibilityLabel("菜单栏预览")

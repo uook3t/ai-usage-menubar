@@ -3,8 +3,6 @@ import AppKit
 @MainActor
 enum StackedStatusRenderer {
     static func image(groups: [MenuBarProviderReadings], vpnName: String, vpnFailed: Bool) -> NSImage {
-        let titleFont = NSFont.systemFont(ofSize: 9, weight: .medium)
-        let numberFont = NSFont.monospacedDigitSystemFont(ofSize: 11, weight: .medium)
         let entries = groups.map { group in
             let title = group.provider == .vpn ? vpnName : group.provider == .claude ? "Claude" : group.provider.displayName
             let readings = group.readings.map { reading -> String in
@@ -22,27 +20,64 @@ enum StackedStatusRenderer {
                 let used = reading.displayMode == .used ? value : 100 - value
                 if used >= 95 { color = .systemRed } else if used >= 80 { color = .systemOrange }
             }
-            let titleWidth = (title as NSString).size(withAttributes: [.font: titleFont]).width
-            let valueWidth = (value as NSString).size(withAttributes: [.font: numberFont]).width
-            return (title, value, ceil(max(titleWidth, valueWidth)) + 4, color)
+            return Entry(title: title, value: value, color: color)
         }
-        let width = entries.reduce(CGFloat(0)) { $0 + $1.2 } + CGFloat(max(entries.count - 1, 0)) * 8
+        return image(entries: entries)
+    }
+
+    static func preview(name: String, value: String) -> NSImage {
+        image(entries: [Entry(title: name, value: value, color: .labelColor)])
+    }
+
+    private struct Entry {
+        let title: String
+        let value: String
+        let color: NSColor
+    }
+
+    private static func image(entries: [Entry]) -> NSImage {
+        let titleFont = NSFont.systemFont(ofSize: 7, weight: .light)
+        let numberFont = NSFont.systemFont(ofSize: 12, weight: .regular)
+        let padding: CGFloat = 2
+        let spacing: CGFloat = 2
+        let widths = entries.map { entry in
+            let titleWidth = (entry.title as NSString).size(withAttributes: [.font: titleFont]).width
+            let valueWidth = (entry.value as NSString).size(withAttributes: [.font: numberFont]).width
+            return max(31, ceil(max(titleWidth, valueWidth)))
+        }
+        let width = widths.reduce(0, +) + padding * 2 + CGFloat(max(entries.count - 1, 0)) * spacing
         let image = NSImage(size: NSSize(width: max(width, 20), height: 22), flipped: false) { _ in
-            var x: CGFloat = 0
-            for (title, value, width, color) in entries {
-                let paragraph = NSMutableParagraphStyle()
-                paragraph.alignment = .center
-                (title as NSString).draw(in: NSRect(x: x, y: 11, width: width, height: 11), withAttributes: [
+            var x = padding
+            let paragraph = NSMutableParagraphStyle()
+            paragraph.alignment = .left
+            for (entry, width) in zip(entries, widths) {
+                (entry.title as NSString).draw(in: NSRect(x: x, y: 14, width: width, height: 7), withAttributes: [
                     .font: titleFont, .foregroundColor: NSColor.labelColor, .paragraphStyle: paragraph
                 ])
-                (value as NSString).draw(in: NSRect(x: x, y: 0, width: width, height: 13), withAttributes: [
-                    .font: numberFont, .foregroundColor: color, .paragraphStyle: paragraph
+                (entry.value as NSString).draw(in: NSRect(x: x, y: 3, width: width, height: 13), withAttributes: [
+                    .font: numberFont, .foregroundColor: entry.color, .paragraphStyle: paragraph
                 ])
-                x += width + 8
+                x += width + spacing
             }
             return true
         }
         image.isTemplate = false
         return image
     }
+}
+
+/// Draw directly inside the status button to avoid its automatic image insets.
+@MainActor
+final class StackedStatusView: NSView {
+    var image: NSImage? {
+        didSet { needsDisplay = true }
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+        image?.draw(at: .zero, from: .zero, operation: .sourceOver, fraction: 1)
+    }
+
+    // Keep the whole status item clickable by its owning NSStatusBarButton.
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
