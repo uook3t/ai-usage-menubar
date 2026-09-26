@@ -42,15 +42,15 @@ enum StackedStatusRenderer {
     private static func image(entries: [Entry]) -> NSImage {
         let titleFont = NSFont.systemFont(ofSize: 7, weight: .light)
         let numberFont = NSFont.systemFont(ofSize: 12, weight: .regular)
-        let padding: CGFloat = 2
-        let spacing: CGFloat = 2
+        let padding: CGFloat = 1
+        let spacing: CGFloat = 1
         let widths = entries.map { entry in
             let titleWidth = (entry.title as NSString).size(withAttributes: [.font: titleFont]).width
             let valueWidth = (entry.value as NSString).size(withAttributes: [.font: numberFont]).width
-            return max(31, ceil(max(titleWidth, valueWidth)))
+            return ceil(max(titleWidth, valueWidth))
         }
         let width = widths.reduce(0, +) + padding * 2 + CGFloat(max(entries.count - 1, 0)) * spacing
-        let image = NSImage(size: NSSize(width: max(width, 20), height: 22), flipped: false) { _ in
+        let image = NSImage(size: NSSize(width: max(width, 1), height: 22), flipped: false) { _ in
             var x = padding
             let paragraph = NSMutableParagraphStyle()
             paragraph.alignment = .left
