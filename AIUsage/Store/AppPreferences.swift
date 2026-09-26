@@ -82,6 +82,12 @@ final class AppPreferences {
     var stackedMenuBar: Bool {
         didSet { defaults.set(stackedMenuBar, forKey: "menuBar.stacked") }
     }
+    var menuBarOuterPadding: Int {
+        didSet { defaults.set(menuBarOuterPadding, forKey: "menuBar.outerPadding") }
+    }
+    var menuBarProviderSpacing: Int {
+        didSet { defaults.set(menuBarProviderSpacing, forKey: "menuBar.providerSpacing") }
+    }
     var vpnDisplayName: String {
         let name = vpnName.trimmingCharacters(in: .whitespacesAndNewlines)
         return name.isEmpty ? "VPN" : String(name.prefix(12))
@@ -104,6 +110,8 @@ final class AppPreferences {
         defaults.set(initialVPNMode.rawValue, forKey: "vpn.displayMode")
         defaults.removeObject(forKey: "vpn.interval")
         stackedMenuBar = defaults.object(forKey: "menuBar.stacked") as? Bool ?? true
+        menuBarOuterPadding = min(max(defaults.object(forKey: "menuBar.outerPadding") as? Int ?? 0, 0), 12)
+        menuBarProviderSpacing = min(max(defaults.object(forKey: "menuBar.providerSpacing") as? Int ?? 8, 2), 20)
 
         let restoredProviders = Self.decode(
             [ProviderID].self,

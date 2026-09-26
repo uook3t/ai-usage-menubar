@@ -6,7 +6,7 @@ enum StackedStatusRenderer {
         appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? .white : .black
     }
 
-    static func image(groups: [MenuBarProviderReadings], vpnName: String, vpnFailed: Bool) -> NSImage {
+    static func image(groups: [MenuBarProviderReadings], vpnName: String, vpnFailed: Bool, outerPadding: CGFloat = 0, providerSpacing: CGFloat = 8) -> NSImage {
         let entries = groups.map { group in
             let title = group.provider == .vpn ? vpnName : group.provider == .claude ? "Claude" : group.provider.displayName
             let readings = group.readings.map { reading -> String in
@@ -26,11 +26,11 @@ enum StackedStatusRenderer {
             }
             return Entry(title: title, value: value, color: color)
         }
-        return image(entries: entries)
+        return image(entries: entries, outerPadding: outerPadding, providerSpacing: providerSpacing)
     }
 
-    static func preview(name: String, value: String) -> NSImage {
-        image(entries: [Entry(title: name, value: value, color: textColor)])
+    static func preview(name: String, value: String, outerPadding: CGFloat = 0) -> NSImage {
+        image(entries: [Entry(title: name, value: value, color: textColor)], outerPadding: outerPadding, providerSpacing: 8)
     }
 
     private struct Entry {
@@ -39,11 +39,11 @@ enum StackedStatusRenderer {
         let color: NSColor
     }
 
-    private static func image(entries: [Entry]) -> NSImage {
+    private static func image(entries: [Entry], outerPadding: CGFloat, providerSpacing: CGFloat) -> NSImage {
         let titleFont = NSFont.systemFont(ofSize: 7, weight: .light)
         let numberFont = NSFont.systemFont(ofSize: 12, weight: .regular)
-        let padding: CGFloat = 1
-        let spacing: CGFloat = 1
+        let padding = min(max(outerPadding, 0), 12)
+        let spacing = min(max(providerSpacing, 2), 20)
         let widths = entries.map { entry in
             let titleWidth = (entry.title as NSString).size(withAttributes: [.font: titleFont]).width
             let valueWidth = (entry.value as NSString).size(withAttributes: [.font: numberFont]).width

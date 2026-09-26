@@ -38,8 +38,8 @@ final class VisualSnapshotTests: XCTestCase {
                     paragraph.alignment = .left
                     let color: NSColor = appearanceName == .darkAqua ? .white : .black
                     for (text, font, rect) in [
-                        ("VPN", NSFont.systemFont(ofSize: 7, weight: .light), NSRect(x: 1, y: 14, width: 46, height: 7)),
-                        ("98.4%", NSFont.systemFont(ofSize: 12, weight: .regular), NSRect(x: 1, y: 3, width: 46, height: 13))
+                        ("VPN", NSFont.systemFont(ofSize: 7, weight: .light), NSRect(x: 0, y: 14, width: 46, height: 7)),
+                        ("98.4%", NSFont.systemFont(ofSize: 12, weight: .regular), NSRect(x: 0, y: 3, width: 46, height: 13))
                     ] {
                         NSAttributedString(string: text, attributes: [
                             .font: font, .foregroundColor: color, .paragraphStyle: paragraph

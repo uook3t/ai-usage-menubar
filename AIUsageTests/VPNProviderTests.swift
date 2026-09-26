@@ -117,12 +117,18 @@ final class VPNProviderTests: XCTestCase {
         settings.vpnDisplayMode = .used
         settings.usageDisplayMode = .remaining
         settings.refreshInterval = .fifteenMinutes
+        XCTAssertEqual(settings.menuBarOuterPadding, 0)
+        XCTAssertEqual(settings.menuBarProviderSpacing, 8)
+        settings.menuBarOuterPadding = 3
+        settings.menuBarProviderSpacing = 12
         let restored = AppPreferences(defaults: defaults)
         XCTAssertEqual(restored.vpnURL, settings.vpnURL)
         XCTAssertEqual(restored.vpnDisplayName, "流量")
         XCTAssertEqual(restored.vpnDisplayMode, .used)
         XCTAssertEqual(restored.usageDisplayMode, .remaining)
         XCTAssertEqual(restored.refreshInterval, .fifteenMinutes)
+        XCTAssertEqual(restored.menuBarOuterPadding, 3)
+        XCTAssertEqual(restored.menuBarProviderSpacing, 12)
     }
 
     @MainActor

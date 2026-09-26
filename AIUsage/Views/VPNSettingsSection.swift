@@ -17,7 +17,8 @@ struct VPNSettingsSection: View {
                 Spacer()
                 Image(nsImage: StackedStatusRenderer.preview(
                     name: name.isEmpty ? "VPN" : String(name.prefix(12)),
-                    value: previewPercentage
+                    value: previewPercentage,
+                    outerPadding: CGFloat(preferences.menuBarOuterPadding)
                 ))
                 .padding(.horizontal, 12).padding(.vertical, 4)
                 .background(.quaternary, in: RoundedRectangle(cornerRadius: 6))

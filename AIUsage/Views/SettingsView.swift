@@ -164,6 +164,22 @@ struct SettingsView: View {
                 }
 
                 GridRow {
+                    Text("两侧留白")
+                        .foregroundStyle(.secondary)
+                    spacingControl("两侧留白", value: $preferences.menuBarOuterPadding, range: 0...12)
+                        .disabled(!preferences.stackedMenuBar)
+                        .help("调整双行菜单栏最左、最右两侧的留白；其他应用自身的留白不受影响。")
+                }
+
+                GridRow {
+                    Text("服务间距")
+                        .foregroundStyle(.secondary)
+                    spacingControl("服务间距", value: $preferences.menuBarProviderSpacing, range: 2...20)
+                        .disabled(!preferences.stackedMenuBar)
+                        .help("调整双行菜单栏中各服务之间的距离。")
+                }
+
+                GridRow {
                     Text("刷新间隔")
                         .foregroundStyle(.secondary)
 
@@ -205,6 +221,21 @@ struct SettingsView: View {
                 }
             }
             .padding(.leading, 12)
+        }
+    }
+
+    private func spacingControl(_ title: String, value: Binding<Int>, range: ClosedRange<Int>) -> some View {
+        HStack(spacing: 8) {
+            Slider(
+                value: Binding(get: { Double(value.wrappedValue) }, set: { value.wrappedValue = Int($0) }),
+                in: Double(range.lowerBound)...Double(range.upperBound),
+                step: 1
+            )
+            .accessibilityLabel(title)
+            .frame(width: 130)
+            Text("\(value.wrappedValue) pt")
+                .monospacedDigit()
+                .frame(width: 42, alignment: .trailing)
         }
     }
 

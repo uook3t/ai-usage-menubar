@@ -440,6 +440,8 @@ final class MenuBarController: NSObject, NSPopoverDelegate, NSWindowDelegate {
                 trackedProviders: preferences.trackedProviderIDs,
                 refreshInterval: preferences.refreshInterval,
                 stacked: preferences.stackedMenuBar,
+                outerPadding: preferences.menuBarOuterPadding,
+                providerSpacing: preferences.menuBarProviderSpacing,
                 vpnName: preferences.vpnDisplayName,
                 vpnFailure: store.states[.vpn]?.failure
             )
@@ -479,7 +481,13 @@ final class MenuBarController: NSObject, NSPopoverDelegate, NSWindowDelegate {
         button.image = nil
         button.title = ""
         if preferences.stackedMenuBar {
-            let image = StackedStatusRenderer.image(groups: groups, vpnName: preferences.vpnDisplayName, vpnFailed: store.states[.vpn]?.failure != nil)
+            let image = StackedStatusRenderer.image(
+                groups: groups,
+                vpnName: preferences.vpnDisplayName,
+                vpnFailed: store.states[.vpn]?.failure != nil,
+                outerPadding: CGFloat(preferences.menuBarOuterPadding),
+                providerSpacing: CGFloat(preferences.menuBarProviderSpacing)
+            )
             statusItem?.length = image.size.width
             stackedStatusView.frame = NSRect(origin: .zero, size: image.size)
             stackedStatusView.image = image
