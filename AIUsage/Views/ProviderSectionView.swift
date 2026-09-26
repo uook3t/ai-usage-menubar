@@ -5,15 +5,18 @@ struct ProviderSectionView: View {
     let state: ProviderState
     let displayMode: UsageDisplayMode
     var displayName: String? = nil
+    let showsBillingUsage: Bool
 
     init(
         state: ProviderState,
         displayMode: UsageDisplayMode = .used,
-        displayName: String? = nil
+        displayName: String? = nil,
+        showsBillingUsage: Bool = true
     ) {
         self.state = state
         self.displayMode = displayMode
         self.displayName = displayName
+        self.showsBillingUsage = showsBillingUsage
     }
 
     var body: some View {
@@ -31,7 +34,7 @@ struct ProviderSectionView: View {
                     .padding(.horizontal, 10)
                     .padding(.bottom, 6)
                 }
-                if let billingUsage = snapshot.billingUsage {
+                if showsBillingUsage, let billingUsage = snapshot.billingUsage {
                     BillingUsageRow(
                         usage: billingUsage,
                         displayMode: displayMode

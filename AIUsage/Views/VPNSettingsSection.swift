@@ -91,10 +91,16 @@ struct ResourceUsageView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 9) {
             HStack(alignment: .firstTextBaseline) {
-                Text(displayMode == .used ? "已用" : "剩余").foregroundStyle(.secondary)
+                Text("流量").foregroundStyle(.secondary)
                 Spacer()
-                Text("\(displayMode.displayedPercent(from: usage.usedPercent).formatted(.number.precision(.fractionLength(1))))%")
-                    .font(.title2.monospacedDigit().weight(.semibold)).foregroundStyle(valueTint)
+                HStack(alignment: .firstTextBaseline, spacing: 3) {
+                    Text("\(displayMode.displayedPercent(from: usage.usedPercent).formatted(.number.precision(.fractionLength(1))))%")
+                        .font(.title3.monospacedDigit().weight(.semibold))
+                        .foregroundStyle(valueTint)
+                    Text(displayMode.valueSuffix)
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(.secondary)
+                }
             }
             ProgressView(value: displayMode.renderedFraction(from: usage.usedPercent)).tint(progressTint)
             HStack {

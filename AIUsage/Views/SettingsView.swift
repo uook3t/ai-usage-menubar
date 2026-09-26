@@ -46,6 +46,10 @@ struct SettingsView: View {
                 detail: "Choose what to track and what appears in the menu bar."
             )
 
+            Toggle("在详情页显示 Codex Credits", isOn: $preferences.showCodexCredits)
+                .toggleStyle(.checkbox)
+                .padding(.vertical, 4)
+
             providerRows
                 .padding(.horizontal, 12)
                 .padding(.vertical, 4)

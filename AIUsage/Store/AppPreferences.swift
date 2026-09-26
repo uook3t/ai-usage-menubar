@@ -66,6 +66,10 @@ final class AppPreferences {
         }
     }
 
+    var showCodexCredits: Bool {
+        didSet { defaults.set(showCodexCredits, forKey: "dashboard.showCodexCredits") }
+    }
+
     var vpnURL: String {
         didSet { defaults.set(vpnURL, forKey: "vpn.url") }
     }
@@ -90,6 +94,7 @@ final class AppPreferences {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        showCodexCredits = defaults.object(forKey: "dashboard.showCodexCredits") as? Bool ?? true
         vpnURL = defaults.string(forKey: "vpn.url") ?? ""
         vpnName = defaults.string(forKey: "vpn.name") ?? "VPN"
         let initialVPNMode = Self.value(UsageDisplayMode.self, forKey: "vpn.displayMode", in: defaults)

@@ -512,6 +512,7 @@ private struct DashboardRootView: View {
             launchAtLogin: launchAtLogin,
             usageDisplayMode: preferences.usageDisplayMode,
             vpnDisplayMode: preferences.vpnDisplayMode,
+            showCodexCredits: preferences.showCodexCredits,
             refreshInterval: preferences.refreshInterval,
             availableUpdateVersion: updateController.availableVersion,
             isCheckingForUpdates: updateController.isChecking,

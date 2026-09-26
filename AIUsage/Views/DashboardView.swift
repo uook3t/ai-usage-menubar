@@ -6,6 +6,7 @@ struct DashboardView: View {
     @Bindable var launchAtLogin: LaunchAtLoginController
     let usageDisplayMode: UsageDisplayMode
     var vpnDisplayMode: UsageDisplayMode = .remaining
+    var showCodexCredits: Bool = true
     let refreshInterval: RefreshIntervalOption
     let availableUpdateVersion: String?
     let isCheckingForUpdates: Bool
@@ -17,7 +18,8 @@ struct DashboardView: View {
             DashboardContentView(
                 store: store,
                 usageDisplayMode: usageDisplayMode,
-                vpnDisplayMode: vpnDisplayMode
+                vpnDisplayMode: vpnDisplayMode,
+                showCodexCredits: showCodexCredits
             )
                 .safeAreaBar(edge: .bottom, spacing: 0) {
                     footer
@@ -148,6 +150,7 @@ struct DashboardContentView: View {
     @Bindable var store: UsageStore
     let usageDisplayMode: UsageDisplayMode
     var vpnDisplayMode: UsageDisplayMode = .remaining
+    var showCodexCredits: Bool = true
 
     var body: some View {
         providerRows
@@ -175,7 +178,8 @@ struct DashboardContentView: View {
                     ProviderSectionView(
                         state: state,
                         displayMode: provider == .vpn ? vpnDisplayMode : usageDisplayMode,
-                        displayName: state.provider == .vpn ? store.vpnName : nil
+                        displayName: state.provider == .vpn ? store.vpnName : nil,
+                        showsBillingUsage: provider != .codex || showCodexCredits
                     )
                 }
             }
